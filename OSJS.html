@@ -26,6 +26,7 @@
             *  - The os class will run the bootloader then wait for computer input (listen on a computer's port).
             *  - Should I have a run program that can take executable file names as a parameter and then give control over
             *    to the respective program?
+            *  Don't forget to have the ability to make and remove directories (MKDIR and RMDIR), create, move, and delete files, and change and list contents of active directories (CD, LS).
             */
 
             var terminal = document.getElementById("terminal");
@@ -103,12 +104,21 @@
             };
 
             var pause = function (seconds) {
+                // Call this function doesn't actually stop execution of the next line because it naturally multithreads.
                 if (!isNaN(parseFloat(seconds))) {
-                    //addLine(seconds); // at least calling the right section, but not really pausing yet...
-                    setTimeout(seconds * 1000);
+                    var i = 0;
+                    var max = seconds * 100;
+                    var _pause = setInterval(function () {
+                        if (i < max) {
+                            i++;
+                        } else {
+                            addLine("CLEARING INTERVAL.");
+                            clearInterval(_pause);
+                        }
+                    }, 10);
                     return 1;
                 } else {
-                    //addLine("NaN");
+                    addLine("PAUSE ERROR: NAN.");
                     return 0;
                 }
             };
@@ -212,7 +222,9 @@
                         currentScript = [];
                         currentScript.push('BEGIN "HELLO-WORLD"');
                         currentScript.push("ECHO HELLO");
+                        currentScript.push("PAUSE 2");
                         currentScript.push("ECHO WORLD");
+                        currentScript.push("PAUSE 1");
                         currentScript.push("ECHO !");
                         currentScript.push("EXIT");
 
@@ -264,7 +276,8 @@
                     addLine(word);
                 }
                 else if ((command.length > 5) && (params[0] == "PAUSE")) {
-                    pause(params[1]);
+                    //pause(3);
+                    //setInterval(function () { addLine("PAUSE"); }, 3000);
                 }
                 else if (params[0] == "CLEAR") {
                     clearAllLines();
@@ -310,6 +323,7 @@
                             i = currentScript.length;
                         }
                         else if (line[0] == "PAUSE") {
+                            pause(3);
                             //var result = pause(line[1]);
                             //if (result == 1) {
                             //    i = currentScript.length;
