@@ -10,6 +10,24 @@
         </canvas>
         
         <script>
+            /*
+            * Can read/write 2 types of files: text (*.txt) and batch (*.bat) files.
+            * Saves those files in a database
+            * Saves location of file in database
+            * Saves file system structure in an XML file.
+            * Can I make this OO and load in separated files?
+            *  - I should separate out essential programs (like batch, echo, pause, and clear).
+            *  - I should also have a <strike>main file</strike> and a bootloader file, the only files which will directly
+            *    mention the HTML document.
+            * Ideas:
+            *  - Have a computer object which handles physical output.
+            *  - Have a keyboard class which contacts the computer (like the controller of the architecture).
+            *  - Have an os class which is a property of the computer object.
+            *  - The os class will run the bootloader then wait for computer input (listen on a computer's port).
+            *  - Should I have a run program that can take executable file names as a parameter and then give control over
+            *    to the respective program?
+            */
+
             var terminal = document.getElementById("terminal");
             var tContext = terminal.getContext("2d");
 
@@ -116,22 +134,54 @@
 
                 }
                 else if (programTitle == "PAUSE") {
-                    
+
                 }
                 else if (programTitle == "CLEAR") {
-                    
+
                 }
 
             };
 
             var executeCommand = function (command) {
+                // addLine("command is executing...");
                 var params = command.split(' ');
                 // Doesn't work yet
                 loadProgram(params[0]);
 
                 // should execute the program, but currently I'll use this
                 if ((command.length > 4) && (params[0] == "ECHO")) {
-                    addLine(command.substring(5));
+                    // addLine("echoing...");
+                    var strLine = command.substring(5);
+                    var word = "";
+                    var override = false;
+
+                    for (var i = 0; i < strLine.length; i++) {
+                        if (strLine[i] == '"') {
+                            // addLine("You're using quotation marks!");
+                            i++;
+                            override = true;
+
+                            while (override) {
+                                if (strLine[i] == '"') {
+                                    // addLine("...end of quote reached!");
+                                    override = false;
+                                } else {
+                                    word += strLine[i];
+                                }
+
+                                i++;
+                            }
+
+                        } else {
+                            if (strLine[i] != " ") {
+                                word += strLine[i];
+                            } else {
+                                i = strLine.length;
+                            }
+                        }
+                    }
+
+                    addLine(word);
                 }
                 else if ((command.length > 5) && (params[0] == "PAUSE")) {
                     pause(params[1]);
@@ -140,6 +190,8 @@
                     clearAllLines();
                 }
                 else if ((command.length > 5) && (params[0] == "BATCH")) {
+                    // Need to load the script first!
+
                     var began = false;
                     for (var i = 0; i < currentScript.length; i++) {
                         // Parse the line
@@ -149,7 +201,18 @@
                         var override = false;
                         for (var j = 0; j < strLine.length; j++) {
                             if (strLine[j] == '"') {
+                                j++;
                                 override = true;
+                                // just start a while loop and override j variable at end (don't lose count of position!)
+                                while (override) {
+                                    if (strLine[j] == '"') {
+                                        override = false;
+                                    } else {
+                                        word += strLine[j];
+                                    }
+
+                                    j++;
+                                }
                             } else {
                                 if (strLine[j] != " ") {
                                     word += strLine[j];
@@ -168,6 +231,10 @@
                         * INPUT captures input into first following parameter variable, 
                         * ECHO captures only the first following parameter, but includes everything in ""'s
                         * REM indicates comments
+                        * IF has 3 parameters: item0, operator, item1
+                        * ELSE has no parameters
+                        * ENDIF has no parameters
+                        * GOTO  has 1 parameter: line nbr to go to next. If inside an IF, end the IF then go to line
                         * EXIT ends the program, anything after is ignored (typically follow with "program-name")
                         * needs an outlet for errors
                         */
@@ -191,6 +258,12 @@
                         }
                         else if (line[0] == "REM") {
 
+                        }
+                        else if (line[0] == "IF") {
+                            // take the conditional, add another for loop that parses through the next loop (recursion?)
+                        }
+                        else if (line[0] == "ENDIF") {
+                            // what do I do to end an IF?
                         }
                         else {
                             addLine("AN ERROR OCCURRED.");
@@ -218,15 +291,13 @@
 
             // Capture keypress
             // from http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
-            terminal.onkeydown = function (evt) {
+            // Had to switch .onkeypress event to .onkeydown so as to capture backspace.
+            terminal.onkeypress = function (evt) {
                 var charCode = evt.which;
                 if (charCode == 13) {
                     addLine("> " + currentLine);
                     registerCommand(currentLine);
                     currentLine = "";
-                } else if (charCode == 8) {
-                    //currentLine = "backspace";
-                    currentLine = currentLine.substring(0, currentLine.length - 1);
                 } else if ((charCode > 36) && (charCode < 41)) {
                     // left is 37, up is 38, right is 39, and down is 40
                 } else if (charCode >= 32) {
@@ -234,6 +305,14 @@
                     currentLine += charStr;
                 } else {
                     //currentLine = charCode;
+                }
+            };
+
+            terminal.onkeydown = function (evt) {
+                var charCode = evt.which;
+
+                if (charCode == 8) {
+                    currentLine = currentLine.substring(0, currentLine.length - 1);
                 }
             };
 
