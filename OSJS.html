@@ -170,8 +170,20 @@
 
             };
 
-            var parseLine = function (text) {
-                // Parse the line
+            var parseLine = function (line) {
+                // When I add the ability to declare functions, will need a 2-pass parser
+                // Since I'm not allowing functions, the first run of finding function tokens is moot
+                // Attempting to use a Recursive Descent Parser
+                // Reference: www.incubatorgames.com/index.php/20110121/simple-scripting-language-part-4/
+                // Looks like I may have to use the first pass after all, since I'm using variables to capture input.
+                // I think I'll skip capturing input in scripts until the second pass is tested and works.
+
+
+
+            };
+
+            var lexLine = function (text) {
+                // Lex the line
                 var line = [];
                 var word = "";
                 var override = false;
@@ -240,7 +252,7 @@
 
             var executeCommand = function (command) {
                 //var params = command.split(' ');
-                var params = parseLine(command);
+                var params = lexLine(command);
                 // Doesn't work yet
                 loadProgram(params[0]);
 
@@ -291,7 +303,7 @@
                     for (var i = 0; i < currentScript.length; i++) {
                         // Parse the line
                         var strLine = currentScript[i];
-                        var line = parseLine(strLine);
+                        var line = lexLine(strLine);
 
                         /* Run the commands
                         * Define my script language which BATCH can run:
@@ -311,7 +323,6 @@
                             began = true;
                             scriptTitle = line[1];
                             addLine("BEGINNING " + scriptTitle + " SCRIPT.");
-                            scriptTitle = line[1];
                         }
                         else if (i == 0) {
                             // BEGIN has to be on the first line or entire thing fails.
@@ -322,31 +333,90 @@
                             addLine("EXITING " + scriptTitle + " SCRIPT.");
                             i = currentScript.length;
                         }
-                        else if (line[0] == "PAUSE") {
-                            pause(3);
-                            //var result = pause(line[1]);
-                            //if (result == 1) {
-                            //    i = currentScript.length;
-                            //}
-                        }
-                        else if (line[0] == "INPUT") {
-
-                        }
+                        //else if (line[0] == "INPUT") {
+                        //    
+                        //}
+                        //else if (line[0] == "PAUSE") {
+                        //    pause(3);
+                        //    //var result = pause(line[1]);
+                        //    //if (result == 1) {
+                        //    //    i = currentScript.length;
+                        //    //}
+                        //}
                         else if (line[0] == "ECHO") {
                             addLine(line[1]);
                         }
                         else if (line[0] == "REM") {
 
                         }
+                        else if (line[0] == "GOTO") {
+                            // Subtract 1 so that user can start counting at line 1 instead of line 0.
+                            // Subtract 1 again so that when i++ runs it goes to correct line :).
+                            i = line[1] - 2;
+                        }
                         else if (line[0] == "IF") {
                             // take the conditional, add another for loop that parses through the next loop (recursion?)
+                            // Nope, just do all on same line and use GOTOs
+
+                            // Evaluate the conditional. If so, GOTO i+1. If not, GOTO i+2.
+                            // Each can essentially act as a block by using GOTOs.
+
+                            // Sorta works if numbers are in there, but this probably works
+                            // alphabetically and also doesn't search for parameters.
+                            // TODO: Fix to work with numbers and parameters
+
+                            if (line[2] == "==") {
+                                if (line[1] == line[3]) {
+                                    
+                                } else {
+                                    i++;
+                                }
+                            }
+                            else if (line[2] == "<") {
+                                if (line[1] < line[3]) {
+                                    
+                                } else {
+                                    i++;
+                                }
+                            }
+                            else if (line[2] == ">") {
+                                if (line[1] > line[3]) {
+                                    
+                                } else {
+                                    i++;
+                                }
+                            }
+                            else if (line[2] == "!=") {
+                                if (line[1] != line[3]) {
+                                    
+                                } else {
+                                    i++;
+                                }
+                            }
+                            else if (line[2] == "<=") {
+                                if (line[1] <= line[3]) {
+                                    
+                                } else {
+                                    i++;
+                                }
+                            }
+                            else if (line[2] == ">=") {
+                                if (line[1] >= line[3]) {
+                                    i++;
+                                }
+                            }
+                            else {
+                                addLine("INVALID CONDITIONAL SYNTAX AT LINE " + (i + 1) + ".");
+                                i = currentScript.length;
+                            }
+
                         }
-                        else if (line[0] == "ELSE") {
-                            // same as before...
-                        }
-                        else if (line[0] == "ENDIF") {
-                            // what do I do to end an IF?
-                        }
+                        //else if (line[0] == "ELSE") {
+                        //    // same as before...
+                        //}
+                        //else if (line[0] == "ENDIF") {
+                        //    // what do I do to end an IF?
+                        //}
                         else {
                             addLine("AN ERROR OCCURRED ON LINE " + (i + 1) + " OF " + params[1] + ".");
                             i = currentScript.length;
