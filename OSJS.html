@@ -296,16 +296,16 @@
 
                         currentScript.push('BEGIN "CONDITIONAL-TEST"');
                         currentScript.push('ECHO "HELLO, WORLD!"');
-                        currentScript.push('IF 1 < 2');
+                        currentScript.push('IF 1 < #1');
                         currentScript.push('GOTO 6');
                         currentScript.push('GOTO 9');
-                        currentScript.push('ECHO "1 IS LESS THAN 2"');
+                        currentScript.push('ECHO "1 IS LESS THAN #1"');
                         currentScript.push('GOTO 10');
-                        currentScript.push('ECHO "1 IS NOT LESS THAN 2"');
+                        currentScript.push('ECHO "1 IS NOT LESS THAN #1"');
                         currentScript.push('GOTO 10');
                         currentScript.push('ECHO "FINISHED PROCESSING CONDITIONAL."');
                         currentScript.push('ECHO GOODBYE!');
-                        currentScript.push('EXIT');
+                        currentScript.push('EXIT "CONDITIONAL-TEST"');
 
                         addLine("...Sample conditional script loaded.");
                     }
@@ -347,6 +347,19 @@
                         // Parse the line
                         var strLine = currentScript[i];
                         var line = lexLine(strLine);
+
+                        for (var j = 0; j < line.length; j++) {
+                            if (line[j][0] == '#') {
+                                var paramNum = parseInt(line[j][1]);
+                                if ((paramNum > 9) || (paramNum < 1)) {
+                                    addLine("ERROR PARSING PARAMETER ON LINE " + (i + 1) + ".");
+                                    i = currentScript.length;
+                                } else {
+                                    // addLine("PARAMETER " + line[j] + " REPLACED ON LINE " + (i + 1) + " WITH " + params[paramNum + 1] + ".");
+                                    line[j] = parseInt(params[paramNum + 1]);
+                                }
+                            }
+                        }
 
                         /* Run the commands
                         * Define my script language which BATCH can run:
@@ -414,7 +427,11 @@
                             // If the parser goes through and replaces all valid tokens with values and all conditional operations with TRUE
                             // or FALSE this might be a little easier. So the parser does the math? Maybe even replace the conditional blocks
                             // and GOTOs? So it renders straight script?
-                            // Mark parameters by beginning with $ and number (i.e. $1), then replace those in the code in the parser?
+                            // Mark parameters by beginning with # and number (i.e. #1), then replace those in the code in the parser
+                            // (as long as not preceded by the '\' escape character)?
+                            // That would allow 9 total parameters after the filename.
+
+                            // addLine('PARAM1:' + line[1] + ' PARAM2:' + line[2] + ' PARAM3:' + line[3]);
 
                             if (line[2] == "==") {
                                 if (line[1] == line[3]) {
