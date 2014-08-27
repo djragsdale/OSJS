@@ -112,7 +112,7 @@
                         if (i < max) {
                             i++;
                         } else {
-                            // addLine("CLEARING INTERVAL.");
+                            addLine("CLEARING INTERVAL.");
                             clearInterval(_pause);
                         }
                     }, 10);
