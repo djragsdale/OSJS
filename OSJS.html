@@ -11,19 +11,24 @@
         
         <script>
             /*
-            * Can read/write 2 types of files: text (*.txt) and batch (*.bat) files.
-            * Saves those files in a database
-            * Saves location of file in database
-            * Saves file system structure in an XML file.
-            * Can I make this OO and load in separated files?
-            *  - I should separate out essential programs (like batch, echo, pause, and clear).
-            *  - I should also have a <strike>main file</strike> and a bootloader file, the only files which will directly
+            * CHECKLIST:
+            * [ ] Can read/write 2 types of files: text (*.txt) and batch (*.bat) files.
+            * [ ] Saves those files in a database
+            * [ ] Saves location of file in database
+            * [ ] Saves file system structure in an XML file.
+            * [ ] Can I make this OO and load in separated files?
+            * [ ]  - I should separate out essential programs (like batch, echo, pause, and clear).
+            * [ ]  - I should also have a <strike>main file</strike> and a bootloader file, the only files which will directly
             *    mention the HTML document.
+            * [ ]  - Maybe have the "programs" written in actual JS, and when installing them you give the path to the JS file and it's saved in the DB.
             * Ideas:
             *  - Have a computer object which handles physical output.
             *  - Have a keyboard class which contacts the computer (like the controller of the architecture).
             *  - Have an os class which is a property of the computer object.
             *  - The os class will run the bootloader then wait for computer input (listen on a computer's port).
+            *  - Have programs interact with a hard drive object (which queries DB to "open files") which returns a JSON object containing program.
+            *     + JSON object contains extension, array of "programs" registered to run it, and everything else can be expected that the program knows
+            *       how to interact with it. For example, batch files will just have an additional array or the lines in the script.
             *  - Should I have a run program that can take executable file names as a parameter and then give control over
             *    to the respective program?
             *  Don't forget to have the ability to make and remove directories (MKDIR and RMDIR), create, move, and delete files, and change and list contents of active directories (CD, LS).
@@ -51,7 +56,7 @@
                 commands.push("BATCH");
                 commands.push("PAUSE");
                 commands.push("CLEAR");
-                commands.push("INPUT");
+                // commands.push("INPUT");
             };
 
             onload = function () {
@@ -123,10 +128,46 @@
                 }
             };
 
-			// Do I want to use this at all?
+            // Do I want to use this at all?
             var evaluateExpression = function (term1, operator, term2) {
+                result = false;
                 // valid operators: <, >, <=, >=, ==, !=, <>
-                return true;
+                if (operator == "<") {
+                    if (parseInt(term1) < parseInt(term2)) {
+                        result = true;
+                    }
+                }
+                else if (operator == "==") {
+                    if (parseInt(term1) == parseInt(term2)) {
+                        result = true;
+                    }
+                }
+                else if (operator == "!=") {
+                    if (parseInt(term1) != parseInt(term2)) {
+                        result = true;
+                    }
+                }
+                else if (operator == ">") {
+                    if (parseInt(term1) > parseInt(term2)) {
+                        result = true;
+                    }
+                }
+                else if (operator == "<=") {
+                    if (parseInt(term1) <= parseInt(term2)) {
+                        result = true;
+                    }
+                }
+                else if (operator == ">=") {
+                    if (parseInt(term1) >= parseInt(term2)) {
+                        result = true;
+                    }
+                }
+                else if (operator == "<>") {
+                    if (parseInt(term1) != parseInt(term2)) {
+                        result = true;
+                    }
+                }
+                return result;
             };
 
             var clearLine = function () {
@@ -233,11 +274,13 @@
                 if (testExtension(fileName, "BAT")) {
                     addLine("LOADING " + fileName + ".");
 
+                    currentScript = [];
+
                     if (fileName == "TEST.BAT") {
                         addLine("Loading sample script...");
 
                         // I just hardcoded this sample batch script for testing purposes.
-                        currentScript = [];
+                        //currentScript = [];
                         currentScript.push('BEGIN "HELLO-WORLD"');
                         currentScript.push("ECHO HELLO");
                         currentScript.push("PAUSE 2");
@@ -247,6 +290,24 @@
                         currentScript.push("EXIT");
 
                         addLine("...Sample script loaded.");
+                    }
+                    else if (fileName == "IF.BAT") {
+                        addLine("Loading sample conditional script...");
+
+                        currentScript.push('BEGIN "CONDITIONAL-TEST"');
+                        currentScript.push('ECHO "HELLO, WORLD!"');
+                        currentScript.push('IF 1 < 2');
+                        currentScript.push('GOTO 6');
+                        currentScript.push('GOTO 9');
+                        currentScript.push('ECHO "1 IS LESS THAN 2"');
+                        currentScript.push('GOTO 10');
+                        currentScript.push('ECHO "1 IS NOT LESS THAN 2"');
+                        currentScript.push('GOTO 10');
+                        currentScript.push('ECHO "FINISHED PROCESSING CONDITIONAL."');
+                        currentScript.push('ECHO GOODBYE!');
+                        currentScript.push('EXIT');
+
+                        addLine("...Sample conditional script loaded.");
                     }
                     else {
                         addLine("FILE NOT FOUND.");
@@ -265,31 +326,7 @@
                 // should execute the program, but currently I'll use this
                 if ((command.length > 4) && (params[0] == "ECHO")) {
                     var strLine = command.substring(5);
-                    var word = "";
-                    var override = false;
-
-                    for (var i = 0; i < strLine.length; i++) {
-                        if (strLine[i] == '"') {
-                            i++;
-                            override = true;
-
-                            while (override) {
-                                if (strLine[i] == '"') {
-                                    override = false;
-                                } else {
-                                    word += strLine[i];
-                                }
-
-                                i++;
-                            }
-                        } else {
-                            if (strLine[i] != " ") {
-                                word += strLine[i];
-                            } else {
-                                i = strLine.length;
-                            }
-                        }
-                    }
+                    var word = params[1];
 
                     addLine(word);
                 }
@@ -371,43 +408,60 @@
                             // alphabetically and also doesn't search for parameters.
                             // TODO: Fix to work with numbers and parameters
 
+                            // Now how does this work if running the first line (operated TRUE), how can I skip the second line?
+                            // Maybe the scripter just has to know to only use GOTOs after conditionals then GOTO back after the 2nd line?
+
+                            // If the parser goes through and replaces all valid tokens with values and all conditional operations with TRUE
+                            // or FALSE this might be a little easier. So the parser does the math? Maybe even replace the conditional blocks
+                            // and GOTOs? So it renders straight script?
+                            // Mark parameters by beginning with $ and number (i.e. $1), then replace those in the code in the parser?
+
                             if (line[2] == "==") {
                                 if (line[1] == line[3]) {
-                                    
+
                                 } else {
                                     i++;
                                 }
                             }
                             else if (line[2] == "<") {
                                 if (line[1] < line[3]) {
-                                    
+
                                 } else {
                                     i++;
                                 }
                             }
                             else if (line[2] == ">") {
                                 if (line[1] > line[3]) {
-                                    
+
                                 } else {
                                     i++;
                                 }
                             }
                             else if (line[2] == "!=") {
                                 if (line[1] != line[3]) {
-                                    
+
                                 } else {
                                     i++;
                                 }
                             }
                             else if (line[2] == "<=") {
                                 if (line[1] <= line[3]) {
-                                    
+
                                 } else {
                                     i++;
                                 }
                             }
                             else if (line[2] == ">=") {
                                 if (line[1] >= line[3]) {
+
+                                } else {
+                                    i++;
+                                }
+                            }
+                            else if (line[2] == "<>") {
+                                if (line[1] != line[3]) {
+
+                                } else {
                                     i++;
                                 }
                             }
