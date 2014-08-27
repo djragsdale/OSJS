@@ -296,12 +296,12 @@
 
                         currentScript.push('BEGIN "CONDITIONAL-TEST"');
                         currentScript.push('ECHO "HELLO, WORLD!"');
-                        currentScript.push('IF 1 < #1');
+                        currentScript.push('IF #1 < #2');
                         currentScript.push('GOTO 6');
-                        currentScript.push('GOTO 9');
-                        currentScript.push('ECHO "1 IS LESS THAN #1"');
+                        currentScript.push('GOTO 8');
+                        currentScript.push('ECHO "#1 IS LESS THAN #2"');
                         currentScript.push('GOTO 10');
-                        currentScript.push('ECHO "1 IS NOT LESS THAN #1"');
+                        currentScript.push('ECHO "#1 IS NOT LESS THAN #2"');
                         currentScript.push('GOTO 10');
                         currentScript.push('ECHO "FINISHED PROCESSING CONDITIONAL."');
                         currentScript.push('ECHO GOODBYE!');
@@ -348,15 +348,24 @@
                         var strLine = currentScript[i];
                         var line = lexLine(strLine);
 
+                        // Preprocessing to replace parameter references
                         for (var j = 0; j < line.length; j++) {
-                            if (line[j][0] == '#') {
-                                var paramNum = parseInt(line[j][1]);
-                                if ((paramNum > 9) || (paramNum < 1)) {
-                                    addLine("ERROR PARSING PARAMETER ON LINE " + (i + 1) + ".");
-                                    i = currentScript.length;
-                                } else {
-                                    // addLine("PARAMETER " + line[j] + " REPLACED ON LINE " + (i + 1) + " WITH " + params[paramNum + 1] + ".");
-                                    line[j] = parseInt(params[paramNum + 1]);
+                            for (var k = 0; k < line[j].length; k++) {
+                                if (line[j][k] == '#') {
+                                    var paramNum = parseInt(line[j][k + 1]);
+                                    if ((paramNum > 9) || (paramNum < 1)) {
+                                        addLine("ERROR PARSING PARAMETER ON LINE " + (i + 1) + ".");
+                                        i = currentScript.length;
+                                    }
+                                    else if (k == 0) {
+                                        var newString = parseInt(params[paramNum + 1]) + line[j].substring(2, line[j].length);
+                                        line[j] = newString;
+                                    }
+                                    else if (line[j][k - 1] != '\\') {
+                                        // addLine("FIRST PART:" + line[j].substring(0, k) + " SECOND PART:" + parseInt(params[paramNum + 1]) + " THIRD PART:" + line[j].substring((k + 2), line[j].length) + ".");
+                                        var newString = line[j].substring(0, k) + parseInt(params[paramNum + 1]) + line[j].substring((k + 2), line[j].length);
+                                        line[j] = newString;
+                                    }
                                 }
                             }
                         }
