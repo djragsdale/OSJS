@@ -129,43 +129,106 @@
             };
 
             // Do I want to use this at all?
-            var evaluateExpression = function (term1, operator, term2) {
+            var evaluateExpression = function (term1, operator, term2, tokenList) {
+
+                // Check for parentheses, then call recursively on segments
+                //addLine("TERM1=" + term1);
+                //addLine("OPERATOR=" + operator);
+                //addLine("TERM2=" + term2);
+
+                var item0 = term1;
+                var item1 = term2;
+
+                var item0IsVariable = false;
+                var item0Name;
+                var item0Found = true;
+                var item1IsVariable = false;
+                var item1Name;
+                var item1Found = true;
+
+                //Check for and replace variables
+                if (term1[0] == '$') {
+                    //addLine("TERM1 IS A VARIABLE.");
+                    item0Name = term1.substring(1, term1.length);
+                    item0Found = false;
+                }
+                if (term2[0] == '$') {
+                    //addLine("TERM2 IS A VARIABLE.");
+                    item1Name = term2.substring(1, term2.length);
+                    item1Found = false;
+                }
+                for (var i = 0; i < tokenList.length; i++) {
+                    if (!item0Found) {
+                        if (tokenList[i].key == item0Name) {
+                            //addLine("TERM1 VARIABLE FOUND.");
+                            item0 = tokenList[i].value;
+                            item0Found = true;
+                        }
+                    }
+                    if (!item1Found) {
+                        if (tokenList[i].key == item1Name) {
+                            //addLine("TERM2 VARIABLE FOUND.");
+                            item1 = tokenList[i].value;
+                            item1Found = true;
+                        }
+                    }
+                    if (item0Found && item1Found) {
+                        //addLine("TERM1 AND TERM2 BOTH FOUND.");
+                        i = tokenList.length;
+                    }
+                }
+
                 result = false;
-                // valid operators: <, >, <=, >=, ==, !=, <>
+                // valid operators: <, >, <=, >=, ==, !=, <>, +, *
                 if (operator == "<") {
-                    if (parseInt(term1) < parseInt(term2)) {
+                    if (parseInt(item0) < parseInt(item1)) {
                         result = true;
                     }
                 }
                 else if (operator == "==") {
-                    if (parseInt(term1) == parseInt(term2)) {
+                    if (parseInt(item0) == parseInt(item1)) {
                         result = true;
                     }
                 }
                 else if (operator == "!=") {
-                    if (parseInt(term1) != parseInt(term2)) {
+                    if (parseInt(item0) != parseInt(item1)) {
                         result = true;
                     }
                 }
                 else if (operator == ">") {
-                    if (parseInt(term1) > parseInt(term2)) {
+                    if (parseInt(item0) > parseInt(item1)) {
                         result = true;
                     }
                 }
                 else if (operator == "<=") {
-                    if (parseInt(term1) <= parseInt(term2)) {
+                    if (parseInt(item0) <= parseInt(item1)) {
                         result = true;
                     }
                 }
                 else if (operator == ">=") {
-                    if (parseInt(term1) >= parseInt(term2)) {
+                    if (parseInt(item0) >= parseInt(item1)) {
                         result = true;
                     }
                 }
                 else if (operator == "<>") {
-                    if (parseInt(term1) != parseInt(term2)) {
+                    if (parseInt(item0) != parseInt(item1)) {
                         result = true;
                     }
+                }
+                else if (operator == '+') {
+                    //addLine("Gonna do some adding...");
+                    //addLine(parseInt(item0));
+                    //addLine(parseInt(item1));
+                    result = parseInt(item0) + parseInt(item1);
+                }
+                else if (operator == '-') {
+                    result = parseInt(item0) - parseInt(item1);
+                }
+                else if (operator == '*') {
+                    result = parseInt(item0) * parseInt(item1);
+                }
+                else if (operator == '/') {
+                    result = parseInt(item0) / parseInt(item1);
                 }
                 return result;
             };
@@ -217,7 +280,7 @@
 
             };
 
-            
+
             var parseLine = function (line) {
                 // When I add the ability to declare functions, will need a 2-pass parser
                 // Since I'm not allowing functions, the first run of finding function tokens is moot
@@ -237,6 +300,10 @@
                 // The second pass creates variables and inserts code to reference variables later on-
                 // Will replace variable names with numbers, so *MYNUMBER will become *0 (index 0 of token list)
                 //   if it's the first variable needed.
+
+                // Not even sure if I want to do this, maybe I'll just parse on the fly and skip
+                // any element of compiling (since I'm going to javascript)
+                // I'll still use a token
 
             };
 
@@ -298,6 +365,10 @@
                         currentScript.push("ECHO WORLD");
                         currentScript.push("PAUSE 1");
                         currentScript.push("ECHO !");
+                        currentScript.push("PAUSE 1");
+                        currentScript.push('ECHO "ALTOGETHER NOW..."');
+                        currentScript.push("PAUSE 2");
+                        currentScript.push('ECHO "HELLO, WORLD!"');
                         currentScript.push("EXIT");
 
                         addLine("...Sample script loaded.");
@@ -320,7 +391,44 @@
 
                         addLine("...Sample conditional script loaded.");
                     }
+                    else if (fileName == "VAR.BAT") {
+                        addLine("Loading sample variable script...");
+
+                        currentScript.push('BEGIN "VARIABLE-TEST"');
+                        currentScript.push('ECHO "HELLO, WORLD!"');
+                        currentScript.push('ECHO "VARIABLE $VAR1 = 4"');
+                        currentScript.push('VAR $VAR1');
+                        currentScript.push('LET $VAR1 = 4');
+                        currentScript.push('ECHO "ECHOING $VAR1"');
+                        currentScript.push('ECHO $VAR1');
+                        currentScript.push('ECHO "SUCCESS!"');
+                        currentScript.push('EXIT "VARIABLE-TEST"');
+
+                        addLine("...Sample variable script loaded.");
+                    }
+                    else if (fileName == "LOOP.BAT") {
+                        addLine("Loading sample loop script...");
+
+                        currentScript.push('BEGIN "LOOP-TEST"');
+                        currentScript.push('ECHO "LOOP TEST BEGINNING..."');
+                        currentScript.push('VAR $VAR1');
+                        currentScript.push('LET $VAR1 = 0');
+                        currentScript.push('ECHO "ECHOING HELLO WORLD #1 TIMES"');
+                        currentScript.push('IF $VAR1 < #1');
+                        currentScript.push('GOTO 9');
+                        currentScript.push('GOTO 12');
+                        currentScript.push('ECHO "HELLO, WORLD!"');
+                        currentScript.push('LET $VAR1 = $VAR1 + 1');
+                        currentScript.push('GOTO 6');
+                        currentScript.push('ECHO "DONE LOOPING."');
+                        currentScript.push('ECHO "SUCCESS!"');
+                        currentScript.push('EXIT "LOOP-TEST"');
+
+                        addLine("...Sample loop script loaded.");
+                    }
                     else {
+                        // TODO: look for script in DB
+
                         addLine("FILE NOT FOUND.");
                     }
                 } else {
@@ -352,6 +460,7 @@
                     // Need to load the script first!
                     loadScript(params[1]);
                     var scriptTitle = "";
+                    var tokenList = [];
 
                     var began = false;
                     for (var i = 0; i < currentScript.length; i++) {
@@ -359,7 +468,8 @@
                         var strLine = currentScript[i];
                         var line = lexLine(strLine);
 
-                        // Preprocessing to replace parameter references
+                        // Preprocessing to replace parameter AND VARIABLE references
+                        // line[j] is the word in the line
                         for (var j = 0; j < line.length; j++) {
                             for (var k = 0; k < line[j].length; k++) {
                                 if (line[j][k] == '#') {
@@ -379,23 +489,44 @@
                                     }
                                 }
                             }
+
+                            // Check for variables
+                            if (line[j][0] == '$') {
+                                if ((line[0] == 'ECHO') || (line[0] == 'IF')) {
+                                    //addLine("Searching for variable...");
+                                    var tokenIndex;
+                                    var varName = line[j].substring(1, line[j].length);
+
+                                    for (var k = 0; k < tokenList.length; k++) {
+                                        if (tokenList[k].key == varName) {
+                                            line[j] = tokenList[k].value;
+                                            //addLine("VARIABLE $" + line[j] + " BEING REPLACED.");
+                                            k = tokenList.length;
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         /* Run the commands
-                        * Define my script language which BATCH can run:
+                        * Define my script language which BATCH can run (-word- indicates low priority):
                         * start with BEGIN "program-name"
-                        * PAUSE
-                        * INPUT captures input into first following parameter variable, 
+                        * -PAUSE-
+                        * INPUT captures user input w/ 2 parameters: variable name, prompt for user  
                         * ECHO captures only the first following parameter, but includes everything in ""'s
                         * REM indicates comments
                         * IF has 3 parameters: item0, operator, item1
                         * ELSE has no parameters
                         * ENDIF has no parameters
-                        * WHILE has 3 parameters: item0, operator, item1
-                        * ENDWHILE has no parameters
+                        * -WHILE- has 3 parameters: item0, operator, item1
+                        * -ENDWHILE- has no parameters
+                        * VAR has 1 parameter: variable name
+                        * LET has 3 parameters: variable, '=', and variable/integer/string
+                        *   - Will need to eventually work with expressions
                         * GOTO  has 1 parameter: line nbr to go to next. If inside an IF, end the IF then go to line
                         * EXIT ends the program, anything after is ignored (typically follow with "program-name")
                         * needs an outlet for errors
+                        *
                         *
                         * Ideas:
                         * To keep blocks organized use a stack.
@@ -418,7 +549,8 @@
                             i = currentScript.length;
                         }
                         //else if (line[0] == "INPUT") {
-                        //    
+                        //    // parameter 1: variable name to capture into
+                        //    // parameter 2: prompt string to give to user
                         //}
                         //else if (line[0] == "PAUSE") {
                         //    pause(3);
@@ -458,6 +590,8 @@
                             // Mark parameters by beginning with # and number (i.e. #1), then replace those in the code in the parser
                             // (as long as not preceded by the '\' escape character)?
                             // That would allow 9 total parameters after the filename.
+
+                            // I should use evaluateExpression instead so I can use recursion
 
                             // addLine('PARAM1:' + line[1] + ' PARAM2:' + line[2] + ' PARAM3:' + line[3]);
 
@@ -522,11 +656,132 @@
                         //else if (line[0] == "ENDIF") {
                         //    // what do I do to end an IF?
                         //}
+                        else if (line[0] == "VAR") {
+                            // Make sure variable name doesn't already exist
+                            //  - If it doesn't, pop it to the token list
+                            //  - If it does, add error and end script
+
+                            var varName = line[1].substring(1, line[1].length);
+                            var exists = false;
+                            for (var j = 0; j < tokenList.length; j++) {
+                                if (tokenList[j].key == varName) { exists = true; }
+                            }
+
+                            //addLine("VARIABLE EXISTS: " + exists);
+
+                            if (!exists) {
+                                tokenList.push({
+                                    key: varName,
+                                    value: ""
+                                });
+                                //addLine("VARIABLE $" + varName + " DOES NOT EXIST. NEW VARIABLE CREATED.");
+                                //addLine("TokenList: ");
+                                //for (j = 0; j < tokenList.length; j++) {
+                                //    addLine(tokenList[j].key + ", " + tokenList[j].value);
+                                //}
+                            } else {
+                                //addLine("VARIABLE NAME '$" + varName + "' ON LINE " + (i + 1) + " ALREADY EXISTS.");
+                                i = currentScript.length;
+                            }
+                        }
+                        else if (line[0] == "LET") {
+                            // Make sure variable name exists
+                            // If it does, check type of 3rd parameter
+                            // - If it's a string or number set the token list item value to it
+                            // - If it's a variable, 
+                            // TODO: Let this work with expressions
+                            // - Should expressions evaluate off a stack? This way it can do math with parentheses.
+
+                            if (line[2] == '=') {
+                                var varName0Exists = false;
+                                var varName0 = line[1].substring(1, line[1].length);
+                                var varName0Index;
+                                var varName1Exists = false;
+                                var varName1IsVariable = false;
+                                var var1 = line[3];
+                                var varName1 = line[3].substring(1, line[3].length);
+                                var varName1Index;
+
+                                if (varName1[0] == '$') { varName1IsVariable = true; }
+
+                                // Make sure variable name exists
+                                for (var j = 0; j < tokenList.length; j++) {
+                                    if (tokenList[j].key == varName0) {
+                                        varName0Exists = true;
+                                        varName0Index = j;
+                                        //addLine("tokenList[" + j + "] = { " + tokenList[j].key + ", " + tokenList[j].value + "};");
+                                    }
+                                    else if ((varName1IsVariable == true) && (tokenList[j].key = varName1)) {
+                                        varName1Exists = true;
+                                        varName1Index = j;
+                                        //addLine("tokenList[" + j + "] = { " + tokenList[j].key + ", " + tokenList[j].value + "};");
+                                    }
+                                }
+
+                                if (varName0Exists) {
+                                    if (line.length == 6) {
+                                        //addLine("LINE.LENGTH==6");
+                                        tokenList[varName0Index].value = evaluateExpression(line[3], line[4], line[5], tokenList);
+                                    }
+                                    else if (!varName1IsVariable) {
+                                        //addLine("!VARNAME1ISVARIABLE");
+                                        tokenList[varName0Index].value = var1;
+                                    }
+                                    else if (varNamevarName1Exists) {
+                                        //addLine("VARNAME1EXISTS");
+                                        tokenList[varName0Index].valueOf = tokenList[varName1Index].value;
+                                    }
+                                    else {
+                                        addLine("VARIABLE2 NAME '$" + varName1 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
+                                        i = currentScript.length;
+                                    }
+                                }
+                                else {
+                                    addLine("VARIABLE1 NAME '$" + varName0 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
+                                    //for (var k = 0; k < line.length; k++) {
+                                    //    addLine("WORD" + k + " = " + line[k]);
+                                    //}
+                                    i = currentScript.length;
+                                }
+
+                                //if (varName0Exists && varName1Exists) {
+                                //    if (varName1IsVariable) {
+                                //        tokenList[varName0Index].value = var1;
+                                //        //addLine("tokenList[" + varName0Index + "] = { " + tokenList[varName0Index].key + ", " + tokenList[varName0Index].value + "};");
+                                //    } else {
+                                //        tokenList[varName0Index].value = tokenList[varName1Index].value;
+                                //        //addLine("tokenList[" + varName0Index + "] = { " + tokenList[varName0Index].key + ", " + tokenList[varName0Index].value + "};");
+                                //    }
+                                //}
+                                //else {
+                                //    if (!varName0Exists) {
+                                //        addLine("VARIABLE1 NAME '$" + varName0 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
+                                //        //for (var k = 0; k < line.length; k++) {
+                                //        //    addLine("WORD" + k + " = " + line[k]);
+                                //        //}
+                                //        i = currentScript.length;
+                                //    }
+                                //    else if (!varName1IsVariable) {
+                                //        tokenList[varName0Index].value = var1;
+                                //        //addLine("tokenList[" + varName0Index + "] = { " + tokenList[varName0Index].key + ", " + tokenList[varName0Index].value + "};");
+                                //    }
+                                //    if (!varName1Exists && varName1IsVariable) {
+                                //        addLine("VARIABLE2 NAME '$" + varName1 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
+                                //        i = currentScript.length;
+                                //    }
+                                //}
+                            } else {
+                                addLine("INVALID OPERATOR ON LINE " + (i + 1) + ".");
+                                i = currentScript.length;
+                            }
+                        }
                         else {
                             addLine("AN ERROR OCCURRED ON LINE " + (i + 1) + " OF " + params[1] + ".");
                             i = currentScript.length;
                         }
                     }
+
+                    tokenList = [];
                 }
                 else {
                     addLine("SYNTAX ERROR.");
