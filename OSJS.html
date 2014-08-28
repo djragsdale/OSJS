@@ -217,6 +217,7 @@
 
             };
 
+            
             var parseLine = function (line) {
                 // When I add the ability to declare functions, will need a 2-pass parser
                 // Since I'm not allowing functions, the first run of finding function tokens is moot
@@ -225,7 +226,17 @@
                 // Looks like I may have to use the first pass after all, since I'm using variables to capture input.
                 // I think I'll skip capturing input in scripts until the second pass is tested and works.
 
+                // Order:
+                // Identify a token
+                // Find the ID that represents the variable name
+                // Check that another variable by this name hasn't already been declared in this scope
+                // If value is initialized then match it with it's value
 
+                // Summary:
+                // The first pass creates a dictionary of objects found in the file keyed by the file signature
+                // The second pass creates variables and inserts code to reference variables later on-
+                // Will replace variable names with numbers, so *MYNUMBER will become *0 (index 0 of token list)
+                //   if it's the first variable needed.
 
             };
 
@@ -380,9 +391,17 @@
                         * IF has 3 parameters: item0, operator, item1
                         * ELSE has no parameters
                         * ENDIF has no parameters
+                        * WHILE has 3 parameters: item0, operator, item1
+                        * ENDWHILE has no parameters
                         * GOTO  has 1 parameter: line nbr to go to next. If inside an IF, end the IF then go to line
                         * EXIT ends the program, anything after is ignored (typically follow with "program-name")
                         * needs an outlet for errors
+                        *
+                        * Ideas:
+                        * To keep blocks organized use a stack.
+                        *   - When end of a block is reached, peek at the top of the stack and see
+                        *     if the block types match. If a ENDWHILE is matched against an IF, then
+                        *     something has gone wrong and an error can be thrown.
                         */
                         if ((i == 0) && (line[0] == "BEGIN")) {
                             began = true;
