@@ -21,6 +21,7 @@
             * [ ]  - I should also have a <strike>main file</strike> and a bootloader file, the only files which will directly
             *    mention the HTML document.
             * [ ]  - Maybe have the "programs" written in actual JS, and when installing them you give the path to the JS file and it's saved in the DB.
+            * [ ] Evaluates complex expressions to true/false, a number, or concatenated string
             * Ideas:
             *  - Have a computer object which handles physical output.
             *  - Have a keyboard class which contacts the computer (like the controller of the architecture).
@@ -109,7 +110,7 @@
             };
 
             var pause = function (seconds) {
-                // Call this function doesn't actually stop execution of the next line because it naturally multithreads.
+                // Calling this function doesn't actually stop execution of the next line because it naturally multithreads.
                 if (!isNaN(parseFloat(seconds))) {
                     var i = 0;
                     var max = seconds * 100;
@@ -128,8 +129,98 @@
                 }
             };
 
-            // Do I want to use this at all?
-            var evaluateExpression = function (term1, operator, term2, tokenList) {
+            var evaluate = function (expression, tokenList) {
+                // Order of evaluation
+
+                // First thing: remove whitespace unless in a string (for concatenation)
+                var newExpression = "";
+                var override = false;
+                for (var i = 0; i < expression.length; i++) {
+                    if (override) {
+                        newExpression += expression[i];
+                    } else {
+                        if (expression[i] != ' ') {
+                            newExpression += expression[i];
+                        }
+                    }
+                    if (expression[i] == '"') {
+                        if (!override) {
+                            override = true;
+                        } else {
+                            override = false;
+                        }
+                    }
+                }
+
+                // Base cases:
+                if (/^([0-9]*)$/.test(newExpression)) {
+                    // Is single number?
+                }
+                else if (true) {
+                    // Is single variable?
+                }
+                else if (/^([A-Za-z]*)$/.test(newExpression)) {
+                    // Is single string?
+                }
+
+
+
+            }
+
+            var evaluateExpression = function (expression, tokenList) {
+
+                // First thing: remove whitespace unless in a string (for concatenation)
+
+                var result = false;
+
+                for (var i = 0; i < expression.length; i++) {
+                    if (expression[i] == ' ') {
+                        // Leave empty so we ignore spaces
+                    }
+                    else if (expression[i] == '(') {
+                        // extract segment from parentheses and recursively call that segment
+                        for (var j = expression.length - 1; j > i; j--) {
+
+                        }
+                    }
+                    else if (expression[i] == ')') {
+
+                    }
+                    else if (expression[i] == '<') {
+
+                    }
+                    else if (expression[i] == '=') {
+                        // Peek to see if next character is '='
+                        // If so, compare against next thing
+                        // If not, do an assignment
+                    }
+                    else if (expression[i] == '!') {
+                        // Peek to see if next character is '='
+                        // If so, check if things do not equal
+                        // If not, throw error (for now no boolean inversion is supported)
+                    }
+                    else if (expression[i] == '>') {
+
+                    }
+                    else if (expression[i] == '+') {
+
+                    }
+                    else if (expression[i] == '-') {
+
+                    }
+                    else if (expression[i] == '*') {
+
+                    }
+                    else if (expression[i] == '/') {
+
+                    }
+                    else if (expression[i] == '&') {
+                        // Peek to see if next character is '&'
+                    }
+                    else if (expression[i] == '|') {
+                        // Peek to see if next character is '|'
+                    }
+                }
 
                 // Check for parentheses, then call recursively on segments
                 //addLine("TERM1=" + term1);
@@ -280,7 +371,6 @@
 
             };
 
-
             var parseLine = function (line) {
                 // When I add the ability to declare functions, will need a 2-pass parser
                 // Since I'm not allowing functions, the first run of finding function tokens is moot
@@ -309,6 +399,7 @@
 
             var lexLine = function (text) {
                 // Lex the line
+                // group "..." and (...)
                 var line = [];
                 var word = "";
                 var override = false;
@@ -330,7 +421,24 @@
 
                             i++;
                         }
-                    } else {
+                    }
+                    else if (text[i] == '(') {
+                        word += text[i];
+                        i++;
+                        override = true;
+                        // just start a while loop and override j variable at end (don't lose count of position!)
+                        while (override) {
+                            word += text[i];
+                            if (text[i] == ')') {
+                                // addLine("Found closing paren.");
+                                line.push(word);
+                                word = "";
+                                override = false;
+                            }
+                            i++;
+                        }
+                    }
+                    else {
                         if (text[i] != " ") {
                             word += text[i];
                             if (i + 1 == text.length) {
