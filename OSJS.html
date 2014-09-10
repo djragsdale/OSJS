@@ -21,6 +21,7 @@
             * [ ]  - I should also have a <strike>main file</strike> and a bootloader file, the only files which will directly
             *    mention the HTML document.
             * [ ]  - Maybe have the "programs" written in actual JS, and when installing them you give the path to the JS file and it's saved in the DB.
+            - Maybe write a real compiler for something simple like COBOL or BASIC that boils the programs down to JS?
             * [ ] Evaluates complex expressions to true/false, a number, or concatenated string
             * Ideas:
             *  - Have a computer object which handles physical output.
@@ -169,159 +170,365 @@
 
             var evaluateExpression = function (expression, tokenList) {
 
-                // First thing: remove whitespace unless in a string (for concatenation)
+	            var newExpression = "";
+	            var nonBoolean = true;
 
-                var result = false;
+	            console.log("newExpression before anything: " + newExpression);
+	
+	            var result = false;
 
-                for (var i = 0; i < expression.length; i++) {
-                    if (expression[i] == ' ') {
-                        // Leave empty so we ignore spaces
-                    }
-                    else if (expression[i] == '(') {
-                        // extract segment from parentheses and recursively call that segment
-                        for (var j = expression.length - 1; j > i; j--) {
+	            // For precedence, should do separate runs for operations order after replacing variables and removing whitespace
+	            // Doesn't handle negatives or floats
+	            // Can I short-circuit this if a single term?
 
-                        }
-                    }
-                    else if (expression[i] == ')') {
+	            // Replace variables and remove whitespace (unless in a string)
+	            // COMPLETE, UNTESTED
+	            var override = false;
+	            for (var i = 0; i < expression.length; i++) {
+		            if (override) {
+			            newExpression += expression[i];
+		            } else {
+			            if (expression[i] == '$') {
+				            var varName = expression[i + 1];
+				            i++;
+				            while (/^([A-Za-z0-9]*)$/.test(expression[i + 1])) {
+					            varName += expression[i + 1];
+					            i++;
+				            }
 
-                    }
-                    else if (expression[i] == '<') {
+				            // Make sure variable name exists, capture if it does
+				            var nameExists = false;
+				            var varVal;
+				            for (var j = 0; j < tokenList.length; j++) {
+					            if (tokenList[j].key == varName) {
+						            nameExists = true;
+						            varVal = tokenList[j].value;
+						            j = tokenList.length;
+					            }
+				            }
+				            if (nameExists) {
+					            newExpression += varVal;
+					            //set new i
+					            // var $something
+					            // let $something = 8375
+					            // 7 + $something - 4
+					            // 7+ $something - 4
+					            // 7+$something - 4
+					            // 7+8375 - 4
+					            // 7+8375- 4
+					            // 7+8375-4
+					            i = i + varVal.length - 1;
+				            } else {
+					            addLine("Error when parsing expression: variable '$" + varName + "' does not exist.");
+					            i = expression.length;
+				            }
+			            }
+			            else if (expression[i] != ' ') {
+				            newExpression += expression[i];
+			            }
+		            }
+		            if (expression[i] == '"') {
+			            if (!override) {
+				            override = true;
+			            } else {
+				            override = false;
+			            }
+		            }
+	            }
+	
+	            console.log("newExpression after variable replacement: " + newExpression);
 
-                    }
-                    else if (expression[i] == '=') {
-                        // Peek to see if next character is '='
-                        // If so, compare against next thing
-                        // If not, do an assignment
-                    }
-                    else if (expression[i] == '!') {
-                        // Peek to see if next character is '='
-                        // If so, check if things do not equal
-                        // If not, throw error (for now no boolean inversion is supported)
-                    }
-                    else if (expression[i] == '>') {
+	            // Recurse through parentheses
+	            // COMPLETE, UNTESTED
+	            for (var i = 0; i < newExpression.length; i++) {
+		            if (newExpression[i] == ' ') {
+			            // Leave empty so we ignore spaces in case they slipped through somehow
+			            // TODO: Later remove for performance gain
+		            }
+		            else if (newExpression[i] == '(') {
+			            // extract segment from parentheses and recursively call that segment
+			            var openParens = 0;
+			            for (var j = i + 1; j < newExpression.length; j++) {
+				            if (newExpression[j] == ')') {
+					            if (openParens == 0) {
+						            // get subResult
+						            addLine("Time to get subresult...");
+						            var subResult = evaluateExpression(newExpression.substring(i + 1, j), tokenList);
+						            addLine("subresult=" + subResult);
+						            // insert subResult into expression
+						            newExpression = newExpression.substring(0, i) + subResult + newExpression.substring(j + 1, newExpression.length);
+						            // set j
+						            j = newExpression.length;
+						            // set i
+						            i = i + subResult.length - 1;
+					            } else {
+						            openParens--;
+					            }
+				            }
+				            else if (newExpression[j] == '(') {
+					            openParens++;
+				            }
+			            }
+		            }
+		            else if (newExpression[i] == ')') {
+			            addLine("An error occurred while parsing conditional expression.");
+			            return false;
+		            }
+	            }
+	
+	            console.log("newExpression after parentheses check: " + newExpression);
 
-                    }
-                    else if (expression[i] == '+') {
+	            // Do multiplication, division, and modulos, no exponents allowed for now
+	            // INCOMPLETE, UNTESTED
+	            // Currently doesn't handle negative numbers
+	            // Test case: (2 + (3 - 1) * (3 + 14 - 10)) / 4 % 9
+	            for (var i = 0; i < newExpression.length; i++) {
+		            if (newExpression[i] == '*') {
+			            // If followed by minus, multiply by the following number *-1
+			            var term0 = "";
+			            var term1 = "";
 
-                    }
-                    else if (expression[i] == '-') {
+			            // Make sure preceded by a number
+			            if (/^([0-9]*)$/.test(newExpression[i - 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i - 1 - term0.length])) {
+					            term0 = newExpression[i - 1 - term0.length] + term0;
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. * preceded by NaN.");
+			            }
+			            if (/^([0-9]*)$/.test(newExpression[i + 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i + 1 + term1.length])) {
+					            term1 += newExpression[i + 1 + term1.length];
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. * followed by NaN.");
+			            }
 
-                    }
-                    else if (expression[i] == '*') {
+			            var subResult = term0 * term1;
 
-                    }
-                    else if (expression[i] == '/') {
+			            // Replace text with new values and set i
+			            newExpression = newExpression.substring(0, i - term0.length) + subResult + newExpression.substring(i + term1.length + 1, newExpression.length);
+			            i = i - term0.length + (subResult + "").length - 1;
+		            }
+		            else if (newExpression[i] == '/') {
+			            // If followed by minus, divide by the following number *-1
+			            var term0 = "";
+			            var term1 = "";
 
-                    }
-                    else if (expression[i] == '&') {
-                        // Peek to see if next character is '&'
-                    }
-                    else if (expression[i] == '|') {
-                        // Peek to see if next character is '|'
-                    }
-                }
+			            // Make sure preceded by a number
+			            if (/^([0-9]*)$/.test(newExpression[i - 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i - 1 - term0.length])) {
+					            term0 = newExpression[i - 1 - term0.length] + term0;
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. / preceded by NaN.");
+			            }
+			            if (/^([0-9]*)$/.test(newExpression[i + 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i + 1 + term1.length])) {
+					            term1 += newExpression[i + 1 + term1.length];
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. / followed by NaN.");
+			            }
 
-                // Check for parentheses, then call recursively on segments
-                //addLine("TERM1=" + term1);
-                //addLine("OPERATOR=" + operator);
-                //addLine("TERM2=" + term2);
+			            var subResult = term0 / term1;
 
-                var item0 = term1;
-                var item1 = term2;
+			            // Replace text with new values and set i
+			            newExpression = newExpression.substring(0, i - term0.length) + subResult + newExpression.substring(i + term1.length + 1, newExpression.length);
+			            i = i - term0.length + (subResult + "").length - 1;
+		            }
+		            else if (newExpression[i] == '%') {
+			            var term0 = "";
+			            var term1 = "";
 
-                var item0IsVariable = false;
-                var item0Name;
-                var item0Found = true;
-                var item1IsVariable = false;
-                var item1Name;
-                var item1Found = true;
+			            // Make sure preceded by a number
+			            if (/^([0-9]*)$/.test(newExpression[i - 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i - 1 - term0.length])) {
+					            term0 = newExpression[i - 1 - term0.length] + term0;
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. % preceded by NaN.");
+			            }
+			            if (/^([0-9]*)$/.test(newExpression[i + 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i + 1 + term1.length])) {
+					            term1 += newExpression[i + 1 + term1.length];
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. % followed by NaN.");
+			            }
+			
+			            var subResult = term0 % term1;
 
-                //Check for and replace variables
-                if (term1[0] == '$') {
-                    //addLine("TERM1 IS A VARIABLE.");
-                    item0Name = term1.substring(1, term1.length);
-                    item0Found = false;
-                }
-                if (term2[0] == '$') {
-                    //addLine("TERM2 IS A VARIABLE.");
-                    item1Name = term2.substring(1, term2.length);
-                    item1Found = false;
-                }
-                for (var i = 0; i < tokenList.length; i++) {
-                    if (!item0Found) {
-                        if (tokenList[i].key == item0Name) {
-                            //addLine("TERM1 VARIABLE FOUND.");
-                            item0 = tokenList[i].value;
-                            item0Found = true;
-                        }
-                    }
-                    if (!item1Found) {
-                        if (tokenList[i].key == item1Name) {
-                            //addLine("TERM2 VARIABLE FOUND.");
-                            item1 = tokenList[i].value;
-                            item1Found = true;
-                        }
-                    }
-                    if (item0Found && item1Found) {
-                        //addLine("TERM1 AND TERM2 BOTH FOUND.");
-                        i = tokenList.length;
-                    }
-                }
+			            // Replace text with new values and set i
+			            newExpression = newExpression.substring(0, i - term0.length) + subResult + newExpression.substring(i + term1.length + 1, newExpression.length);
+			            i = i - term0.length + (subResult + "").length - 1;
+		            }
+	            }
+	
+	            console.log("newExpression after */% check: " + newExpression);
 
-                result = false;
-                // valid operators: <, >, <=, >=, ==, !=, <>, +, *
-                if (operator == "<") {
-                    if (parseInt(item0) < parseInt(item1)) {
-                        result = true;
-                    }
-                }
-                else if (operator == "==") {
-                    if (parseInt(item0) == parseInt(item1)) {
-                        result = true;
-                    }
-                }
-                else if (operator == "!=") {
-                    if (parseInt(item0) != parseInt(item1)) {
-                        result = true;
-                    }
-                }
-                else if (operator == ">") {
-                    if (parseInt(item0) > parseInt(item1)) {
-                        result = true;
-                    }
-                }
-                else if (operator == "<=") {
-                    if (parseInt(item0) <= parseInt(item1)) {
-                        result = true;
-                    }
-                }
-                else if (operator == ">=") {
-                    if (parseInt(item0) >= parseInt(item1)) {
-                        result = true;
-                    }
-                }
-                else if (operator == "<>") {
-                    if (parseInt(item0) != parseInt(item1)) {
-                        result = true;
-                    }
-                }
-                else if (operator == '+') {
-                    //addLine("Gonna do some adding...");
-                    //addLine(parseInt(item0));
-                    //addLine(parseInt(item1));
-                    result = parseInt(item0) + parseInt(item1);
-                }
-                else if (operator == '-') {
-                    result = parseInt(item0) - parseInt(item1);
-                }
-                else if (operator == '*') {
-                    result = parseInt(item0) * parseInt(item1);
-                }
-                else if (operator == '/') {
-                    result = parseInt(item0) / parseInt(item1);
-                }
-                return result;
+	            // Do addition and subtraction
+	            // INCOMPLETE, UNTESTED
+	            for (var i = 0; i < newExpression.length; i++) {
+		            if (newExpression[i] == '+') {
+			            // If followed by minus, add the following number *-1
+			            var term0 = "";
+			            var term1 = "";
+
+			            // Make sure preceded by a number
+			            if (/^([0-9]*)$/.test(newExpression[i - 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i - 1 - term0.length])) {
+					            term0 = newExpression[i - 1 - term0.length] + term0;
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. + preceded by NaN.");
+			            }
+			            if (/^([0-9]*)$/.test(newExpression[i + 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i + 1 + term1.length])) {
+					            term1 += newExpression[i + 1 + term1.length];
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. + followed by NaN.");
+			            }
+			
+			            var subResult = parseFloat(term0) + parseFloat(term1);
+			
+			            // Replace text with new values and set i
+			            newExpression = newExpression.substring(0, i - term0.length) + subResult + newExpression.substring(i + term1.length + 1, newExpression.length);
+			            i = i - term0.length + (subResult + "").length - 1;
+		            }
+		            else if (newExpression[i] == '-') {
+			            // If followed by minus, subtract by the following number *-1
+			            var term0 = "";
+			            var term1 = "";
+
+			            // Make sure preceded by a number
+			            if (/^([0-9]*)$/.test(newExpression[i - 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i - 1 - term0.length])) {
+					            term0 = newExpression[i - 1 - term0.length] + term0;
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. - preceded by NaN.");
+			            }
+			            if (/^([0-9]*)$/.test(newExpression[i + 1])) {
+				            while (/^([0-9]*)$/.test(newExpression[i + 1 + term1.length])) {
+					            term1 += newExpression[i + 1 + term1.length];
+				            }
+			            } else {
+				            addLine("An error occurred while parsing expression. - followed by NaN.");
+			            }
+
+			            var subResult = term0 - term1;
+
+			            // Replace text with new values and set i
+			            newExpression = newExpression.substring(0, i - term0.length) + subResult + newExpression.substring(i + term1.length + 1, newExpression.length);
+			            i = i - term0.length + (subResult + "").length - 1;
+		            }
+	            }
+	
+	            console.log("newExpression after +- check: " + newExpression);
+
+	            // Check for boolean expression
+	            // INCOMPLETE, UNTESTED
+	            // I need to factor in existing result somehow in case there are mutliple boolean operators per line
+	
+	            for (var i = 0; i < newExpression.length; i++) {
+		            if (newExpression[i] == '<' && newExpression[i + 1] == '>') {
+			            nonBoolean = false;
+			            addLine("Evaluating <> on " + newExpression);
+			
+			            if (evaluateExpression(newExpression.substring(0, i), tokenList) != evaluateExpression(newExpression.substring(i+2, newExpression.length))) {
+				            addLine(newExpression + " evaluates TRUE");
+				            result = true;
+			            } else {
+				            addLine(newExpression + " evaluates FALSE");
+				            result = false;
+			            }
+			            i++;
+		            }
+		            else if (newExpression[i] == '<') {
+			            nonBoolean = false;
+			
+			            if (evaluateExpression(newExpression.substring(0, i), tokenList) < evaluateExpression(newExpression.substring(i+1, newExpression.length))) {
+				            addLine(newExpression + " evaluates TRUE");
+				            result = true;
+			            } else {
+				            addLine(newExpression + " evaluates FALSE");
+				            result = false;
+			            }
+		            }
+		            else if (newExpression[i] == '=' && newExpression[i + 1] == '=') {
+			            nonBoolean = false;
+			            // No assignment allowed inside expressions for now
+			            if (evaluateExpression(newExpression.substring(0, i), tokenList) == evaluateExpression(newExpression.substring(i+2, newExpression.length))) {
+				            addLine(newExpression + " evaluates TRUE");
+				            result = true;
+			            } else {
+				            addLine(newExpression + " evaluates FALSE");
+				            result = false;
+			            }
+			            //result = evaluateExpression(newExpression.substring(0, i), tokenList) == evaluateExpression(newExpression.substring(i+2, newExpression.length));
+			
+			            i++;
+		            }
+		            else if (newExpression[i] == '!' && newExpression[i + 1] == '=') {
+			            nonBoolean = false;
+			            // Peek to see if next character is '='
+			            // If so, check if things do not equal
+			            // If not, throw error (for now no boolean inversion is supported)
+			
+			            if (evaluateExpression(newExpression.substring(0, i), tokenList) != evaluateExpression(newExpression.substring(i+2, newExpression.length))) {
+				            addLine(newExpression + " evaluates TRUE");
+				            result = true;
+			            } else {
+				            addLine(newExpression + " evaluates FALSE");
+				            result = false;
+			            }
+			
+			            i++;
+		            }
+		            else if (newExpression[i] == '>') {
+			            nonBoolean = false;
+			
+			            if (evaluateExpression(newExpression.substring(0, i), tokenList) > evaluateExpression(newExpression.substring(i+1, newExpression.length))) {
+				            addLine(newExpression + " evaluates TRUE");
+				            result = true;
+			            } else {
+				            addLine(newExpression + " evaluates FALSE");
+				            result = false;
+			            }
+		            }
+		            else if (newExpression[i] == '&' && newExpression[i + 1] == '&') {
+			            nonBoolean = false;
+			            // Peek to see if next character is '&'
+			            // Then do truth tables on evaluateExpression of left half vs. right half
+			            // If just a number on one side, evaluate as 0=false and everything else being true
+			
+			            i++;
+		            }
+		            else if (newExpression[i] == '|' && newExpression[i + 1] == '|') {
+			            nonBoolean = false;
+			            // Peek to see if next character is '|'
+			            // Then do truth tables on evaluateExpression of left half vs. right half
+			            // If just a number on one side, evaluate as 0=false and everything else being true
+			
+			            i++;
+		            }
+	            }
+	
+	            console.log("newExpression after boolean check: " + newExpression);
+
+	            // Check to see type of result.
+	            // If a string or number, return newExpression (or set result as newExpression).
+	            // If a boolean value, return result.
+	            if (nonBoolean == true) {
+		            addLine("newExpression is nonBoolean");
+		            result = newExpression;
+	            } else {
+		            addLine("newExpression is Boolean");
+	            }
+
+	            return result;
             };
 
             var clearLine = function () {
@@ -660,13 +867,13 @@
                         //    // parameter 1: variable name to capture into
                         //    // parameter 2: prompt string to give to user
                         //}
-                        //else if (line[0] == "PAUSE") {
-                        //    pause(3);
-                        //    //var result = pause(line[1]);
-                        //    //if (result == 1) {
-                        //    //    i = currentScript.length;
-                        //    //}
-                        //}
+                        else if (line[0] == "PAUSE") {
+                            pause(3);
+                            //var result = pause(line[1]);
+                            //if (result == 1) {
+                            //    i = currentScript.length;
+                            //}
+                        }
                         else if (line[0] == "ECHO") {
                             addLine(line[1]);
                         }
