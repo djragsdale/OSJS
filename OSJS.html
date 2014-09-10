@@ -4,6 +4,7 @@
     <head>
         <meta charset="utf-8" />
         <title>OS JS</title>
+        <script type="text/javascript" src="jquery-1.11.1.min.js"></script>
     </head>
     <body>
         <canvas id="terminal" width="768" height="576" tabindex="0">
@@ -1164,8 +1165,24 @@
 
                 if (charCode == 8) {
                     currentLine = currentLine.substring(0, currentLine.length - 1);
+                    evt.preventDefault();
                 }
             };
+
+            // copied from http://ux.stackexchange.com/questions/53176/why-does-backspace-go-back-a-page-this-behavior-is-so-frustrating
+            var terminalFocus = 'false';
+            // when focus happens, set a variable
+            $(document).on('focusin', 'input, textarea', function () {
+                terminalFocus = 'true';
+            });
+            // if not in a form field, stop backspace and delete default action
+            $(document).keypress(function (e) {
+                if (e.which == 8 || e.which == 46) {
+                    if (terminalFocus == 'false') {
+                        e.preventDefault();
+                    }
+                }
+            });
 
         </script>
     </body>
