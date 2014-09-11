@@ -1,0 +1,46 @@
+[10-Sep-2014 16:13:51 America/Denver] PHP Parse error:  syntax error, unexpected ']' in /home3/otiummus/public_html/osjs/getScript.php on line 12
+[10-Sep-2014 17:16:05 America/Denver] PHP Parse error:  syntax error, unexpected ']' in /home3/otiummus/public_html/osjs/getScript.php on line 13
+[10-Sep-2014 17:16:58 America/Denver] PHP Parse error:  syntax error, unexpected ']' in /home3/otiummus/public_html/osjs/getScript.php on line 13
+[10-Sep-2014 17:20:59 America/Denver] PHP Parse error:  syntax error, unexpected ']' in /home3/otiummus/public_html/osjs/getScript.php on line 13
+[10-Sep-2014 17:23:53 America/Denver] PHP Parse error:  syntax error, unexpected ']' in /home3/otiummus/public_html/osjs/getScript.php on line 13
+[10-Sep-2014 17:25:41 America/Denver] PHP Parse error:  syntax error, unexpected ']' in /home3/otiummus/public_html/osjs/getScript.php on line 13
+[10-Sep-2014 17:25:44 America/Denver] PHP Parse error:  syntax error, unexpected ']' in /home3/otiummus/public_html/osjs/getScript.php on line 13
+[10-Sep-2014 17:38:07 America/Denver] PHP Warning:  mysqli_connect(): (28000/1045): Access denied for user 'otiummus_osjssu'@'localhost' (using password: YES) in /home3/otiummus/public_html/osjs/getScript.php on line 6
+[10-Sep-2014 17:38:07 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home3/otiummus/public_html/osjs/getScript.php on line 8
+[10-Sep-2014 17:38:43 America/Denver] PHP Warning:  mysqli_connect(): (28000/1045): Access denied for user 'otiummus_osjssu'@'localhost' (using password: YES) in /home3/otiummus/public_html/osjs/getScript.php on line 6
+[10-Sep-2014 17:38:43 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home3/otiummus/public_html/osjs/getScript.php on line 8
+[10-Sep-2014 17:39:00 America/Denver] PHP Warning:  mysqli_connect(): (28000/1045): Access denied for user 'otiummus_osjssu'@'localhost' (using password: YES) in /home3/otiummus/public_html/osjs/getScript.php on line 6
+[10-Sep-2014 17:39:00 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home3/otiummus/public_html/osjs/getScript.php on line 8
+[10-Sep-2014 17:39:03 America/Denver] PHP Warning:  mysqli_connect(): (28000/1045): Access denied for user 'otiummus_osjssu'@'localhost' (using password: YES) in /home3/otiummus/public_html/osjs/getScript.php on line 6
+[10-Sep-2014 17:39:03 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home3/otiummus/public_html/osjs/getScript.php on line 8
+[10-Sep-2014 17:39:37 America/Denver] PHP Warning:  mysqli_connect(): (HY000/2005): Unknown MySQL server host 'localhost:3306' (0) in /home3/otiummus/public_html/osjs/getScript.php on line 6
+[10-Sep-2014 17:39:37 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home3/otiummus/public_html/osjs/getScript.php on line 8
+[10-Sep-2014 17:39:39 America/Denver] PHP Warning:  mysqli_connect(): (HY000/2005): Unknown MySQL server host 'localhost:3306' (0) in /home3/otiummus/public_html/osjs/getScript.php on line 6
+[10-Sep-2014 17:39:39 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home3/otiummus/public_html/osjs/getScript.php on line 8
+[10-Sep-2014 20:29:45 America/Denver] PHP Warning:  mysqli_connect(): (HY000/2005): Unknown MySQL server host 'localhost:3306' (0) in /home3/otiummus/public_html/osjs/getScript.php on line 6
+[10-Sep-2014 20:29:45 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home3/otiummus/public_html/osjs/getScript.php on line 8
+[10-Sep-2014 20:37:46 America/Denver] PHP Fatal error:  Uncaught exception 'PDOException' with message 'SQLSTATE[28000] [1045] Access denied for user 'otiummus_osjssu'@'localhost' (using password: YES)' in /home3/otiummus/public_html/osjs/getScript.php:12
+Stack trace:
+#0 /home3/otiummus/public_html/osjs/getScript.php(12): PDO->__construct('mysql:host=loca...', 'otiummus_osjssu', 'r0R3mpE98', Array)
+#1 {main}
+  thrown in /home3/otiummus/public_html/osjs/getScript.php on line 12
+[10-Sep-2014 20:41:22 America/Denver] PHP Fatal error:  Uncaught exception 'PDOException' with message 'SQLSTATE[28000] [1045] Access denied for user 'otiummus_osjssu'@'localhost' (using password: YES)' in /home3/otiummus/public_html/osjs/getScript.php:12
+Stack trace:
+#0 /home3/otiummus/public_html/osjs/getScript.php(12): PDO->__construct('mysql:host=loca...', 'otiummus_osjssu', 'r0R3mpE98', Array)
+#1 {main}
+  thrown in /home3/otiummus/public_html/osjs/getScript.php on line 12
+[10-Sep-2014 20:58:38 America/Denver] PHP Warning:  PDO::query(): SQLSTATE[HY000]: General error: mode must be an integer in /home3/otiummus/public_html/osjs/getScript.php on line 18
+[10-Sep-2014 20:58:38 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home3/otiummus/public_html/osjs/getScript.php on line 18
+[10-Sep-2014 21:09:03 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home3/otiummus/public_html/osjs/getScript.php on line 28
+[10-Sep-2014 21:09:05 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home3/otiummus/public_html/osjs/getScript.php on line 28
+[10-Sep-2014 21:10:09 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home3/otiummus/public_html/osjs/getScript.php on line 28
+[10-Sep-2014 21:10:31 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home3/otiummus/public_html/osjs/getScript.php on line 28
+[10-Sep-2014 21:12:03 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home3/otiummus/public_html/osjs/getScript.php on line 29
+[10-Sep-2014 21:12:25 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home3/otiummus/public_html/osjs/getScript.php on line 29
+[10-Sep-2014 21:12:27 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home3/otiummus/public_html/osjs/getScript.php on line 29
+[10-Sep-2014 21:23:21 America/Denver] PHP Parse error:  syntax error, unexpected '[' in /home3/otiummus/public_html/osjs/getScript.php on line 3
+[10-Sep-2014 21:23:32 America/Denver] PHP Parse error:  syntax error, unexpected '[' in /home3/otiummus/public_html/osjs/getScript.php on line 3
+[10-Sep-2014 21:24:00 America/Denver] PHP Notice:  Undefined variable: mysqli_real_escape_string in /home3/otiummus/public_html/osjs/getScript.php on line 3
+[10-Sep-2014 21:24:00 America/Denver] PHP Fatal error:  Function name must be a string in /home3/otiummus/public_html/osjs/getScript.php on line 3
+[10-Sep-2014 21:24:05 America/Denver] PHP Notice:  Undefined variable: mysqli_real_escape_string in /home3/otiummus/public_html/osjs/getScript.php on line 3
+[10-Sep-2014 21:24:05 America/Denver] PHP Fatal error:  Function name must be a string in /home3/otiummus/public_html/osjs/getScript.php on line 3

@@ -9,6 +9,20 @@
     <body>
         <canvas id="terminal" width="768" height="576" tabindex="0">
         </canvas>
+
+        <div>
+            <h1>Recognized commands (all uppercase)</h1>
+            <ul>
+                <li>HELP</li>
+                <li>CLEAR</li>
+                <li>ECHO <i>message</i></li>
+                <li>BATCH HELLO-WORLD.BAT</li>
+                <li>BATCH TEST.BAT</li>
+                <li>BATCH VAR.BAT</li>
+                <li>BATCH IF.BAT <i>number1</i> <i>number2</i></li>
+                <li>BATCH LOOP.BAT <i>number</i></li>
+            </ul>
+        </div>
         
         <script>
             /*
@@ -59,6 +73,7 @@
                 commands.push("BATCH");
                 commands.push("PAUSE");
                 commands.push("CLEAR");
+                commands.push("HELP");
                 // commands.push("INPUT");
             };
 
@@ -664,89 +679,139 @@
                 return line;
             }
 
+            var dbRequest = function (query) {
+                //var xmlhttp;
+                if (query == "") {
+                    addLine("A SQL error occurred.");
+                    return;
+                } else {
+                    addLine("Querying filesystem for " + query + "...");
+                }
+                if (window.XMLHttpRequest) {
+                    xmlhttp = new XMLHttpRequest();
+                } else {
+                    xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+                }
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        addLine(xmlhttp.responseText);
+                        //addLine("...got a response.");
+                    }
+                };
+                xmlhttp.open("GET", "getScript.php?q=" + query, true);
+                xmlhttp.send();
+            };
+
             var loadScript = function (fileName) {
                 if (testExtension(fileName, "BAT")) {
                     addLine("LOADING " + fileName + ".");
 
                     currentScript = [];
 
-                    if (fileName == "TEST.BAT") {
-                        addLine("Loading sample script...");
-
-                        // I just hardcoded this sample batch script for testing purposes.
-                        //currentScript = [];
-                        currentScript.push('BEGIN "HELLO-WORLD"');
-                        currentScript.push("ECHO HELLO");
-                        currentScript.push("PAUSE 2");
-                        currentScript.push("ECHO WORLD");
-                        currentScript.push("PAUSE 1");
-                        currentScript.push("ECHO !");
-                        currentScript.push("PAUSE 1");
-                        currentScript.push('ECHO "ALTOGETHER NOW..."');
-                        currentScript.push("PAUSE 2");
-                        currentScript.push('ECHO "HELLO, WORLD!"');
-                        currentScript.push("EXIT");
-
-                        addLine("...Sample script loaded.");
+                    if (fileName.substring(0, fileName.length - 4) == "") {
+                        addLine("An error occurred while loading script: invalid file name.");
+                    } else {
+                        addLine("Querying filesystem for " + fileName + "...");
                     }
-                    else if (fileName == "IF.BAT") {
-                        addLine("Loading sample conditional script...");
 
-                        currentScript.push('BEGIN "CONDITIONAL-TEST"');
-                        currentScript.push('ECHO "HELLO, WORLD!"');
-                        currentScript.push('IF #1 < #2');
-                        currentScript.push('GOTO 6');
-                        currentScript.push('GOTO 8');
-                        currentScript.push('ECHO "#1 IS LESS THAN #2"');
-                        currentScript.push('GOTO 10');
-                        currentScript.push('ECHO "#1 IS NOT LESS THAN #2"');
-                        currentScript.push('GOTO 10');
-                        currentScript.push('ECHO "FINISHED PROCESSING CONDITIONAL."');
-                        currentScript.push('ECHO GOODBYE!');
-                        currentScript.push('EXIT "CONDITIONAL-TEST"');
-
-                        addLine("...Sample conditional script loaded.");
+                    if (window.XMLHttpRequest) {
+                        xmlhttp = new XMLHttpRequest();
+                    } else {
+                        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
                     }
-                    else if (fileName == "VAR.BAT") {
-                        addLine("Loading sample variable script...");
 
-                        currentScript.push('BEGIN "VARIABLE-TEST"');
-                        currentScript.push('ECHO "HELLO, WORLD!"');
-                        currentScript.push('ECHO "VARIABLE $VAR1 = 4"');
-                        currentScript.push('VAR $VAR1');
-                        currentScript.push('LET $VAR1 = 4');
-                        currentScript.push('ECHO "ECHOING $VAR1"');
-                        currentScript.push('ECHO $VAR1');
-                        currentScript.push('ECHO "SUCCESS!"');
-                        currentScript.push('EXIT "VARIABLE-TEST"');
+                    xmlhttp.open("GET", "getScript.php?q=" + fileName.substring(0, fileName.length - 4), false);
+                    xmlhttp.send();
 
-                        addLine("...Sample variable script loaded.");
+                    var results = JSON.parse(xmlhttp.responseText);
+
+                    for (var i = 0; i < results.length; i++) {
+                        currentScript.push(results[i]);
                     }
-                    else if (fileName == "LOOP.BAT") {
-                        addLine("Loading sample loop script...");
 
-                        currentScript.push('BEGIN "LOOP-TEST"');
-                        currentScript.push('ECHO "LOOP TEST BEGINNING..."');
-                        currentScript.push('VAR $VAR1');
-                        currentScript.push('LET $VAR1 = 0');
-                        currentScript.push('ECHO "ECHOING HELLO WORLD #1 TIMES"');
-                        currentScript.push('IF $VAR1 < #1');
-                        currentScript.push('GOTO 9');
-                        currentScript.push('GOTO 12');
-                        currentScript.push('ECHO "HELLO, WORLD!"');
-                        currentScript.push('LET $VAR1 = $VAR1 + 1');
-                        currentScript.push('GOTO 6');
-                        currentScript.push('ECHO "DONE LOOPING."');
-                        currentScript.push('ECHO "SUCCESS!"');
-                        currentScript.push('EXIT "LOOP-TEST"');
-
-                        addLine("...Sample loop script loaded.");
+                    if (results.length > 0) {
+                        addLine("..." + fileName + " loaded.");
+                    } else {
+                        addLine("...file loading error occurred: file does not exist.");
                     }
-                    else {
-                        // TODO: look for script in DB
 
-                        addLine("FILE NOT FOUND.");
-                    }
+                    //if (fileName == "TEST.BAT") {
+                    //    addLine("Loading sample script...");
+                    //
+                    //    // I just hardcoded this sample batch script for testing purposes.
+                    //    //currentScript = [];
+                    //    currentScript.push('BEGIN "HELLO-WORLD"');
+                    //    currentScript.push("ECHO HELLO");
+                    //    currentScript.push("PAUSE 2");
+                    //    currentScript.push("ECHO WORLD");
+                    //    currentScript.push("PAUSE 1");
+                    //    currentScript.push("ECHO !");
+                    //    currentScript.push("PAUSE 1");
+                    //    currentScript.push('ECHO "ALTOGETHER NOW..."');
+                    //    currentScript.push("PAUSE 2");
+                    //    currentScript.push('ECHO "HELLO, WORLD!"');
+                    //    currentScript.push("EXIT");
+                    //
+                    //    addLine("...Sample script loaded.");
+                    //}
+                    //else if (fileName == "IF.BAT") {
+                    //    addLine("Loading sample conditional script...");
+                    //
+                    //    currentScript.push('BEGIN "CONDITIONAL-TEST"');
+                    //    currentScript.push('ECHO "HELLO, WORLD!"');
+                    //    currentScript.push('IF #1 < #2');
+                    //    currentScript.push('GOTO 6');
+                    //    currentScript.push('GOTO 8');
+                    //    currentScript.push('ECHO "#1 IS LESS THAN #2"');
+                    //    currentScript.push('GOTO 10');
+                    //    currentScript.push('ECHO "#1 IS NOT LESS THAN #2"');
+                    //    currentScript.push('GOTO 10');
+                    //    currentScript.push('ECHO "FINISHED PROCESSING CONDITIONAL."');
+                    //    currentScript.push('ECHO GOODBYE!');
+                    //    currentScript.push('EXIT "CONDITIONAL-TEST"');
+                    //
+                    //    addLine("...Sample conditional script loaded.");
+                    //}
+                    //else if (fileName == "VAR.BAT") {
+                    //    addLine("Loading sample variable script...");
+                    //
+                    //    currentScript.push('BEGIN "VARIABLE-TEST"');
+                    //    currentScript.push('ECHO "HELLO, WORLD!"');
+                    //    currentScript.push('ECHO "VARIABLE $VAR1 = 4"');
+                    //    currentScript.push('VAR $VAR1');
+                    //    currentScript.push('LET $VAR1 = 4');
+                    //    currentScript.push('ECHO "ECHOING $VAR1"');
+                    //    currentScript.push('ECHO $VAR1');
+                    //    currentScript.push('ECHO "SUCCESS!"');
+                    //    currentScript.push('EXIT "VARIABLE-TEST"');
+                    //
+                    //    addLine("...Sample variable script loaded.");
+                    //}
+                    //else if (fileName == "LOOP.BAT") {
+                    //    addLine("Loading sample loop script...");
+                    //
+                    //    currentScript.push('BEGIN "LOOP-TEST"');
+                    //    currentScript.push('ECHO "LOOP TEST BEGINNING..."');
+                    //    currentScript.push('VAR $VAR1');
+                    //    currentScript.push('LET $VAR1 = 0');
+                    //    currentScript.push('ECHO "ECHOING HELLO WORLD #1 TIMES"');
+                    //    currentScript.push('IF $VAR1 < #1');
+                    //    currentScript.push('GOTO 9');
+                    //    currentScript.push('GOTO 12');
+                    //    currentScript.push('ECHO "HELLO, WORLD!"');
+                    //    currentScript.push('LET $VAR1 = $VAR1 + 1');
+                    //    currentScript.push('GOTO 6');
+                    //    currentScript.push('ECHO "DONE LOOPING."');
+                    //    currentScript.push('ECHO "SUCCESS!"');
+                    //    currentScript.push('EXIT "LOOP-TEST"');
+                    //
+                    //    addLine("...Sample loop script loaded.");
+                    //}
+                    //else {
+                    //    // TODO: look for script in DB
+                    //
+                    //    addLine("FILE NOT FOUND.");
+                    //}
                 } else {
                     addLine("INVALID FILE EXTENSION.");
                 }
@@ -758,12 +823,32 @@
                 // Doesn't work yet
                 loadProgram(params[0]);
 
+                console.log("running command " + params[0] + ".");BATCH
+
                 // should execute the program, but currently I'll use this
                 if ((command.length > 4) && (params[0] == "ECHO")) {
                     var strLine = command.substring(5);
                     var word = params[1];
 
                     addLine(word);
+                }
+                else if (params[0] == "HELP") {
+                    if (command.length > 4) {
+                        addLine('LIST OF RECOGNIZED COMMANDS:');
+                        addLine('- HELP [command]');
+                        addLine('- CLEAR');
+                        addLine('- ECHO "MESSAGE"');
+                        addLine('- BATCH FILENAME.BAT [params...]')
+                        addLine('');
+                    }
+                    else {
+                        addLine('LIST OF RECOGNIZED COMMANDS:');
+                        addLine('- HELP [command]');
+                        addLine('- CLEAR');
+                        addLine('- ECHO "MESSAGE"');
+                        addLine('- BATCH FILENAME.BAT [params...]')
+                        addLine('');
+                    }
                 }
                 else if ((command.length > 5) && (params[0] == "PAUSE")) {
                     //pause(3);
@@ -1167,6 +1252,10 @@
                     currentLine = currentLine.substring(0, currentLine.length - 1);
                     evt.preventDefault();
                 }
+                else if (charCode == 32) {
+                    currentLine += " ";
+                    evt.preventDefault();
+                }
             };
 
             // copied from http://ux.stackexchange.com/questions/53176/why-does-backspace-go-back-a-page-this-behavior-is-so-frustrating
@@ -1185,5 +1274,13 @@
             });
 
         </script>
+
+        <!--
+        <div>
+            <input type="button" id="btnRequest" onclick="dbRequest('LOOP')" value="Request" />
+            <br />
+            <input type="text" id="txtResponse" style="width: 800px;"></input>
+        </div>
+        -->
     </body>
 </html>
