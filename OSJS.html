@@ -853,12 +853,12 @@
                 //    var params = [];
                 //    main(params);
                 //});
-                ensure({ js: "getProgram.php?q=" + params[0] }, function () {
+                ensure({ js: "getProgram.php?q=" + params[0] + "&n=" + Math.random() }, function () {
                     //if (errored) {
                     //    addLine("..." + params[0] + " program does not exist.");
                     //}
                     //else {
-                        //var newParams = [];
+                    //var newParams = [];
                         addLine('...' + params[0] + ' program loaded.');
                         console.log('about to run main()');
                         try {
@@ -866,6 +866,7 @@
                         } catch (exc) {
                             addLine("Error.");
                         }
+                        main = undefined;
                     //}
                 });
 
@@ -1339,6 +1340,8 @@
         <div>
             <input type="button" id="btnRequest" onclick="dbRequest('LOOP')" value="Sample Script" />
             <!--
+            <br />
+            <input type="button" id="btnRequest" onclick="batch(['BATCH', 'IF.BAT', '3', '7'])" value="Batch test" />
             <br />
             <input type="text" id="txtResponse" style="width: 800px;"></input>
             -->
