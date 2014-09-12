@@ -1,5 +1,7 @@
 getScript.php
 getProgram.php
+getContents.php
+pathExists.php
 
 # OS generated files #
 .DS_Store

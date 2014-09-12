@@ -19,6 +19,10 @@
                 <li>HELP</li>
                 <li>CLEAR</li>
                 <li>ECHO <i>message</i></li>
+                <li>LS</li>
+                <li>LS <i>/directory</i></li>
+                <li>CD ..</li>
+                <li>CD <i>/directory</i></li>
                 <li>BATCH HELLO-WORLD.BAT</li>
                 <li>BATCH TEST.BAT</li>
                 <li>BATCH VAR.BAT</li>
@@ -33,27 +37,30 @@
             /*
             * CHECKLIST:
             * [ ] Can read/write 2 types of files: text (*.txt) and batch (*.bat) files.
-            * [ ] Saves those files in a database
-            * [ ] Saves location of file in database
-            * [ ] Saves file system structure in an XML file.
+            * [+] Saves those files in a database
+            * [+] Saves location of file in database
+            * [ ] Saves file system structure in database (or XML file).
             * [ ] Can I make this OO and load in separated files?
-            * [ ]  - I should separate out essential programs (like batch, echo, pause, and clear).
+            * [+]  - I should separate out essential programs (like batch, echo, pause, and clear).
             * [ ]  - I should also have a <strike>main file</strike> and a bootloader file, the only files which will directly
             *    mention the HTML document.
-            * [ ]  - Maybe have the "programs" written in actual JS, and when installing them you give the path to the JS file and it's saved in the DB.
-            - Maybe write a real compiler for something simple like COBOL or BASIC that boils the programs down to JS?
-            * [ ] Evaluates complex expressions to true/false, a number, or concatenated string
+            * [+]  - Maybe have the "programs" written in actual JS, and when installing them you give the path to the JS file and it's saved in the DB.
+            * [ ]  - Maybe write a real compiler for something simple like COBOL or BASIC that boils the programs down to JS?
+            * [-]  - Evaluates complex expressions to true/false, a number, or concatenated string
+            * 
             * Ideas:
             *  - Have a computer object which handles physical output.
             *  - Have a keyboard class which contacts the computer (like the controller of the architecture).
             *  - Have an os class which is a property of the computer object.
             *  - The os class will run the bootloader then wait for computer input (listen on a computer's port).
             *  - Have programs interact with a hard drive object (which queries DB to "open files") which returns a JSON object containing program.
-            *     + JSON object contains extension, array of "programs" registered to run it, and everything else can be expected that the program knows
+            *     + JSON object contains extension, mime type, array of "programs" registered to run it, and everything else can be expected that the program knows
             *       how to interact with it. For example, batch files will just have an additional array or the lines in the script.
             *  - Should I have a run program that can take executable file names as a parameter and then give control over
             *    to the respective program?
-            *  Don't forget to have the ability to make and remove directories (MKDIR and RMDIR), create, move, and delete files, and change and list contents of active directories (CD, LS).
+            *  - Don't forget to have the ability to make and remove directories (MKDIR and RMDIR), create, move, and delete files, and change and list contents of active directories (CD, LS).
+            *  - How can a program take over what's on the screen without removing the past commands and responses
+            *  - Now that the filesystem is navigable, should scripts only be runnable within their directories? Programs should be run in every directory, but parameters (like filename) should refer to locations relative to currentPath.
             */
 
             var terminal = document.getElementById("terminal");
@@ -67,6 +74,7 @@
             var fgColor = "#FFFFFF";
             var font = "Courier New";
             var lines = [];
+            var currentPath = "/";
             var currentLine = "";
             var commands = [];
             var currentScript = [];
@@ -75,11 +83,17 @@
 
             var loadDefaultPrograms = function () {
                 // Should probably run sql boot scripts loading the listed programs
+                commands.push("HELP");
                 commands.push("ECHO");
+                commands.push("CLEAR");
                 commands.push("BATCH");
                 commands.push("PAUSE");
-                commands.push("CLEAR");
-                commands.push("HELP");
+                //commands.push("HELLO");
+                commands.push("LS");
+                commands.push("CD");
+                commands.push("MKDIR");
+                commands.push("RMDIR");
+                commands.push("RM");
                 // commands.push("INPUT");
             };
 
@@ -107,9 +121,9 @@
                 tContext.stroke();
 
                 if (frame > 49) {
-                    writeLine("> " + currentLine + "_", width * (0.02), height * (0.97));
+                    writeLine(currentPath + "> " + currentLine + "_", width * (0.02), height * (0.97));
                 }
-                else { writeLine("> " + currentLine, width * (0.02), height * (0.97)); }
+                else { writeLine(currentPath + "> " + currentLine, width * (0.02), height * (0.97)); }
 
                 for (var i = 0; i < lines.length; i++) {
                     writeLine(lines[i], width * (0.02), height * (0.07) + (i * (fontSize * 1.08)));
@@ -859,14 +873,14 @@
                     //}
                     //else {
                     //var newParams = [];
-                        addLine('...' + params[0] + ' program loaded.');
-                        console.log('about to run main()');
-                        try {
-                            main(params);
-                        } catch (exc) {
-                            addLine("Error.");
-                        }
-                        main = undefined;
+                    addLine('...' + params[0] + ' program loaded.');
+                    console.log('about to run main()');
+                    try {
+                        main(params);
+                    } catch (exc) {
+                        addLine("Error.");
+                    }
+                    main = undefined;
                     //}
                 });
 
@@ -1294,7 +1308,7 @@
             terminal.onkeypress = function (evt) {
                 var charCode = evt.which;
                 if (charCode == 13) {
-                    addLine("> " + currentLine);
+                    addLine(currentPath + "> " + currentLine);
                     registerCommand(currentLine);
                     currentLine = "";
                 } else if ((charCode > 36) && (charCode < 41)) {
@@ -1341,7 +1355,20 @@
             <input type="button" id="btnRequest" onclick="dbRequest('LOOP')" value="Sample Script" />
             <!--
             <br />
+            <script>
+                var splitTest = function () {
+                    var t = document.getElementById('txtResponse');
+                    var s = '/programs/cobol_src';
+                    var sArray = s.split('/');
+                    t.value = sArray.length;
+                    alert('---' + sArray[0] + '---');
+                };
+            </script>
+            <input type="button" id="btnRequest" onclick="splitTest()" value="Split test" />
+            <br />
             <input type="button" id="btnRequest" onclick="batch(['BATCH', 'IF.BAT', '3', '7'])" value="Batch test" />
+            <br />
+            <input type="button" id="btnRequest" onclick="function () { document.getElementById('txtResponse').value = currentPath; }" value="Print currentPath" />
             <br />
             <input type="text" id="txtResponse" style="width: 800px;"></input>
             -->
