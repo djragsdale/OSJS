@@ -1,6 +1,8 @@
 getScript.php
 getProgram.php
 getContents.php
+getFile.php
+setFile.php
 pathExists.php
 
 # OS generated files #

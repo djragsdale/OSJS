@@ -80,6 +80,9 @@
             var currentScript = [];
             var currentProgram = [];
             var programLoaded = false;
+            var interrupt = null;
+            var programControl = false;
+            var DEBUG = false;
 
             var loadDefaultPrograms = function () {
                 // Should probably run sql boot scripts loading the listed programs
@@ -115,15 +118,17 @@
                 tContext.fillStyle = bgColor;
                 tContext.fillRect(0, 0, width, height);
 
-                tContext.moveTo(width * (0.02), height * (0.92));
-                tContext.lineTo(width * (0.98), height * (0.92));
-                tContext.strokeStyle = fgColor;
-                tContext.stroke();
+                if (!programControl) {
+                    tContext.moveTo(width * (0.02), height * (0.92));
+                    tContext.lineTo(width * (0.98), height * (0.92));
+                    tContext.strokeStyle = fgColor;
+                    tContext.stroke();
 
-                if (frame > 49) {
-                    writeLine(currentPath + "> " + currentLine + "_", width * (0.02), height * (0.97));
+                    if (frame > 49) {
+                        writeLine(currentPath + "> " + currentLine + "_", width * (0.02), height * (0.97));
+                    }
+                    else { writeLine(currentPath + "> " + currentLine, width * (0.02), height * (0.97)); }
                 }
-                else { writeLine(currentPath + "> " + currentLine, width * (0.02), height * (0.97)); }
 
                 for (var i = 0; i < lines.length; i++) {
                     writeLine(lines[i], width * (0.02), height * (0.07) + (i * (fontSize * 1.08)));
@@ -131,6 +136,8 @@
             };
 
             var writeLine = function (text, x, y) {
+                // TODO: Handle a cursor...
+
                 tContext.font = fontSize + "px " + font;
                 tContext.fillStyle = fgColor;
                 tContext.fillText(text, x, y);
@@ -741,14 +748,14 @@
 
             var loadScript = function (fileName) {
                 if (testExtension(fileName, "BAT")) {
-                    addLine("LOADING " + fileName + ".");
+                    if (DEBUG) { addLine("LOADING " + fileName + "."); }
 
                     currentScript = [];
 
                     if (fileName.substring(0, fileName.length - 4) == "") {
                         addLine("An error occurred while loading script: invalid file name.");
                     } else {
-                        addLine("Querying filesystem for " + fileName + "...");
+                        if (DEBUG) { addLine("Querying filesystem for " + fileName + "..."); }
                     }
 
                     if (window.XMLHttpRequest) {
@@ -767,9 +774,9 @@
                     }
 
                     if (results.length > 0) {
-                        addLine("..." + fileName + " loaded.");
+                        if (DEBUG) { addLine("..." + fileName + " loaded."); }
                     } else {
-                        addLine("...file loading error occurred: file does not exist.");
+                        addLine("File loading error occurred: file does not exist.");
                     }
 
                     //if (fileName == "TEST.BAT") {
@@ -859,7 +866,7 @@
                 var params = lexLine(command);
                 // Doesn't work yet
                 //loadProgram(params[0]);
-                addLine('Querying filesystem for program...');
+                if (DEBUG) { addLine('Querying filesystem for program...'); }
                 //$.getScript('getProgram.php?q=HELP', function () {
                 //    programLoaded = true;
                 //    addLine('...' + params[0] + ' program loaded.');
@@ -873,8 +880,10 @@
                     //}
                     //else {
                     //var newParams = [];
-                    addLine('...' + params[0] + ' program loaded.');
-                    console.log('about to run main()');
+                    if (DEBUG) {
+                        addLine('...' + params[0] + ' program loaded.');
+                        console.log('about to run main()');
+                    }
                     try {
                         main(params);
                     } catch (exc) {
@@ -1305,15 +1314,15 @@
             // Capture keypress
             // from http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
             // Had to switch .onkeypress event to .onkeydown so as to capture backspace.
+            // Currently still don't capture (, &, or %.
             terminal.onkeypress = function (evt) {
                 var charCode = evt.which;
                 if (charCode == 13) {
                     addLine(currentPath + "> " + currentLine);
                     registerCommand(currentLine);
                     currentLine = "";
-                } else if ((charCode > 36) && (charCode < 41)) {
-                    // left is 37, up is 38, right is 39, and down is 40
                 } else if (charCode >= 32) {
+                    // No reason to handle arrow keys separately here since they don't invoke the onKeyPress event
                     var charStr = String.fromCharCode(charCode);
                     currentLine += charStr;
                 } else {
@@ -1331,6 +1340,13 @@
                 else if (charCode == 32) {
                     currentLine += " ";
                     evt.preventDefault();
+                }
+                //else if ((charCode > 36) && (charCode < 41)) {
+                //    // left is 37, up is 38, right is 39, and down is 40
+                //}
+                else {
+                    // I'll let the interrupt handle the arrow keys.
+                    interrupt = charCode;
                 }
             };
 
