@@ -1354,7 +1354,7 @@
                     //    // left is 37, up is 38, right is 39, and down is 40
                     //}
                     else if (charCode == 27) {
-                        //fgColor = "#FF0000";
+                        fgColor = "#FF0000";
                         interrupt = charCode;
                     }
                     else {
@@ -1364,7 +1364,7 @@
                 }
                 else {
                     if (charCode == 27) {
-                        //fgColor = "#FF0000";
+                        fgColor = "#FF0000";
                     }
                     interrupt = charCode;
                 }

@@ -33,7 +33,59 @@
             </ul>
         </div>
 
-        <script id="runProgram"></script>
+        <script id="runProgram" type="text/javascript">
+            self.onmessage = function (event) {
+                // Need to make this functional. Have all needed variables passed in a JSON object
+                // Return all results as needed
+                // Maybe even have this thread have its own worker for running the program?
+                // Don't forget to terminate worker when finished and set to undefined
+                // http://www.w3schools.com/html/tryit.asp?filename=tryhtml5_webworker
+                // Other worker ideas: clock?
+                //console.log("runProgram is running. DEBUG is " + DEBUG + ".");
+                //loadProgram(params[0]);
+                //if (DEBUG) { addLine('Querying filesystem for program...'); }
+                self.postMessage({ line: "In page runProgram script got it" });
+                //$.getScript('getProgram.php?q=HELP', function () {
+                //    programLoaded = true;
+                //    addLine('...' + params[0] + ' program loaded.');
+                //    console.log('about to run main()');
+                //    var params = [];
+                //    main(params);
+                //});
+                /*
+                ensure({ js: "getProgram.php?q=" + params[0] + "&n=" + Math.random() }, function () {
+                //if (errored) {
+                //    addLine("..." + params[0] + " program does not exist.");
+                //}
+                //else {
+                //var newParams = [];
+                if (DEBUG) {
+                addLine('...' + params[0] + ' program loaded.');
+                console.log('about to run main()');
+                }
+                try {
+                main(params);
+                } catch (exc) {
+                addLine("Error.");
+                }
+                //main = undefined;
+                //}
+                });
+
+                console.log("running command " + params[0] + ".");
+
+                //var runCount = 0;
+                //var maxRuns = 5000;
+                console.log("program is loaded.");
+                //console.log("programLoaded=" + programLoaded);
+                //console.log("runCount=" + runCount);
+
+                programLoaded = false;
+                */
+                //how do I allow user input inside programs?
+            };
+
+        </script>
         
 
         <script>
@@ -870,436 +922,21 @@
                 //var params = command.split(' ');
                 var params = lexLine(command);
                 // Doesn't work yet
-                //loadProgram(params[0]);
-                if (DEBUG) { addLine('Querying filesystem for program...'); }
-                //$.getScript('getProgram.php?q=HELP', function () {
-                //    programLoaded = true;
-                //    addLine('...' + params[0] + ' program loaded.');
-                //    console.log('about to run main()');
-                //    var params = [];
-                //    main(params);
-                //});
-                ensure({ js: "getProgram.php?q=" + params[0] + "&n=" + Math.random() }, function () {
-                    //if (errored) {
-                    //    addLine("..." + params[0] + " program does not exist.");
-                    //}
-                    //else {
-                    //var newParams = [];
-                    if (DEBUG) {
-                        addLine('...' + params[0] + ' program loaded.');
-                        console.log('about to run main()');
-                    }
-                    try {
-                        main(params);
-                    } catch (exc) {
-                        addLine("Error.");
-                    }
-                    //main = undefined;
-                    //}
-                });
+                var wkrJS = document.getElementById('runProgram').textContent;
+                var blobJS = new Blob([wkrProgram], {type: 'text/javascript'});
+                var urlJS = window.URL.createObjectURL(blobJS);
+                console.log(urlJS);
 
-                console.log("running command " + params[0] + ".");
+                var wkrProgram = new Worker(urlJS);
+                //var wkrProgram = new Worker('runProgram.js');
+                var pgmStatus = {};
+                wkrProgram.onmessage = function (event) {
+                    pgmStatus = event.data.line;
+                    console.log(pgmStatus);
+                    // access this variable for lines, programControl, etc.
+                };
 
-                //var runCount = 0;
-                //var maxRuns = 5000;
-                console.log("program is loaded.");
-                //console.log("programLoaded=" + programLoaded);
-                //console.log("runCount=" + runCount);
-
-                var testing = false;
-                if (testing) {
-                    // should execute the program, but currently I'll use this
-                    if ((command.length > 4) && (params[0] == "ECHO")) {
-                        var strLine = command.substring(5);
-                        var word = params[1];
-
-                        addLine(word);
-                    }
-                    else if (params[0] == "HELP") {
-                        addLine("Generating help commands...");
-                        if (command.length > 4) {
-                            addLine('LIST OF RECOGNIZED COMMANDS:');
-                            addLine('- HELP [command]');
-                            addLine('- CLEAR');
-                            addLine('- ECHO "MESSAGE"');
-                            addLine('- BATCH FILENAME.BAT [params...]')
-                            addLine('');
-                        }
-                        else {
-                            var params = [];
-                            console.log('about to run main()');
-                            main(params);
-                            //addLine('LIST OF RECOGNIZED COMMANDS:');
-                            //addLine('- HELP [command]');
-                            //addLine('- CLEAR');
-                            //addLine('- ECHO "MESSAGE"');
-                            //addLine('- BATCH FILENAME.BAT [params...]')
-                            //addLine('');
-                        }
-                    }
-                    else if ((command.length > 5) && (params[0] == "PAUSE")) {
-                        //pause(3);
-                        //setInterval(function () { addLine("PAUSE"); }, 3000);
-                    }
-                    else if (params[0] == "CLEAR") {
-                        clearAllLines();
-                    }
-                    else if ((command.length > 5) && (params[0] == "BATCH") && (testExtension(params[1], "BAT"))) {
-                        // Need to load the script first!
-                        loadScript(params[1]);
-                        var scriptTitle = "";
-                        var tokenList = [];
-
-                        var began = false;
-                        for (var i = 0; i < currentScript.length; i++) {
-                            // Parse the line
-                            var strLine = currentScript[i];
-                            var line = lexLine(strLine);
-
-                            // Preprocessing to replace parameter AND VARIABLE references
-                            // line[j] is the word in the line
-                            for (var j = 0; j < line.length; j++) {
-                                for (var k = 0; k < line[j].length; k++) {
-                                    if (line[j][k] == '#') {
-                                        var paramNum = parseInt(line[j][k + 1]);
-                                        if ((paramNum > 9) || (paramNum < 1)) {
-                                            addLine("ERROR PARSING PARAMETER ON LINE " + (i + 1) + ".");
-                                            i = currentScript.length;
-                                        }
-                                        else if (k == 0) {
-                                            var newString = parseInt(params[paramNum + 1]) + line[j].substring(2, line[j].length);
-                                            line[j] = newString;
-                                        }
-                                        else if (line[j][k - 1] != '\\') {
-                                            // addLine("FIRST PART:" + line[j].substring(0, k) + " SECOND PART:" + parseInt(params[paramNum + 1]) + " THIRD PART:" + line[j].substring((k + 2), line[j].length) + ".");
-                                            var newString = line[j].substring(0, k) + parseInt(params[paramNum + 1]) + line[j].substring((k + 2), line[j].length);
-                                            line[j] = newString;
-                                        }
-                                    }
-                                }
-
-                                // Check for variables
-                                if (line[j][0] == '$') {
-                                    if ((line[0] == 'ECHO') || (line[0] == 'IF')) {
-                                        //addLine("Searching for variable...");
-                                        var tokenIndex;
-                                        var varName = line[j].substring(1, line[j].length);
-
-                                        for (var k = 0; k < tokenList.length; k++) {
-                                            if (tokenList[k].key == varName) {
-                                                line[j] = tokenList[k].value;
-                                                //addLine("VARIABLE $" + line[j] + " BEING REPLACED.");
-                                                k = tokenList.length;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            /* Run the commands
-                            * Define my script language which BATCH can run (-word- indicates low priority):
-                            * start with BEGIN "program-name"
-                            * -PAUSE-
-                            * INPUT captures user input w/ 2 parameters: variable name, prompt for user  
-                            * ECHO captures only the first following parameter, but includes everything in ""'s
-                            * REM indicates comments
-                            * IF has 3 parameters: item0, operator, item1
-                            * ELSE has no parameters
-                            * ENDIF has no parameters
-                            * -WHILE- has 3 parameters: item0, operator, item1
-                            * -ENDWHILE- has no parameters
-                            * VAR has 1 parameter: variable name
-                            * LET has 3 parameters: variable, '=', and variable/integer/string
-                            *   - Will need to eventually work with expressions
-                            * GOTO  has 1 parameter: line nbr to go to next. If inside an IF, end the IF then go to line
-                            * EXIT ends the program, anything after is ignored (typically follow with "program-name")
-                            * needs an outlet for errors
-                            *
-                            *
-                            * Ideas:
-                            * To keep blocks organized use a stack.
-                            *   - When end of a block is reached, peek at the top of the stack and see
-                            *     if the block types match. If a ENDWHILE is matched against an IF, then
-                            *     something has gone wrong and an error can be thrown.
-                            */
-                            if ((i == 0) && (line[0] == "BEGIN")) {
-                                began = true;
-                                scriptTitle = line[1];
-                                addLine("BEGINNING " + scriptTitle + " SCRIPT.");
-                            }
-                            else if (i == 0) {
-                                // BEGIN has to be on the first line or entire thing fails.
-                                addLine("BEGIN COMMAND MISSING ON FIRST LINE.");
-                                i = currentScript.length;
-                            }
-                            else if (line[0] == "EXIT") {
-                                addLine("EXITING " + scriptTitle + " SCRIPT.");
-                                i = currentScript.length;
-                            }
-                            //else if (line[0] == "INPUT") {
-                            //    // parameter 1: variable name to capture into
-                            //    // parameter 2: prompt string to give to user
-                            //}
-                            else if (line[0] == "PAUSE") {
-                                pause(3);
-                                //var result = pause(line[1]);
-                                //if (result == 1) {
-                                //    i = currentScript.length;
-                                //}
-                            }
-                            else if (line[0] == "ECHO") {
-                                addLine(line[1]);
-                            }
-                            else if (line[0] == "REM") {
-
-                            }
-                            else if (line[0] == "GOTO") {
-                                // Subtract 1 so that user can start counting at line 1 instead of line 0.
-                                // Subtract 1 again so that when i++ runs it goes to correct line :).
-                                i = line[1] - 2;
-                            }
-                            else if (line[0] == "IF") {
-                                // take the conditional, add another for loop that parses through the next loop (recursion?)
-                                // Nope, just do all on same line and use GOTOs
-
-                                // Evaluate the conditional. If so, GOTO i+1. If not, GOTO i+2.
-                                // Each can essentially act as a block by using GOTOs.
-
-                                // Sorta works if numbers are in there, but this probably works
-                                // alphabetically and also doesn't search for parameters.
-                                // TODO: Fix to work with numbers and parameters
-
-                                // Now how does this work if running the first line (operated TRUE), how can I skip the second line?
-                                // Maybe the scripter just has to know to only use GOTOs after conditionals then GOTO back after the 2nd line?
-
-                                // If the parser goes through and replaces all valid tokens with values and all conditional operations with TRUE
-                                // or FALSE this might be a little easier. So the parser does the math? Maybe even replace the conditional blocks
-                                // and GOTOs? So it renders straight script?
-                                // Mark parameters by beginning with # and number (i.e. #1), then replace those in the code in the parser
-                                // (as long as not preceded by the '\' escape character)?
-                                // That would allow 9 total parameters after the filename.
-
-                                // I should use evaluateExpression instead so I can use recursion
-
-                                // addLine('PARAM1:' + line[1] + ' PARAM2:' + line[2] + ' PARAM3:' + line[3]);
-
-                                //if (line[2] == "==") {
-                                //    if (line[1] == line[3]) {
-                                //
-                                //    } else {
-                                //        i++;
-                                //    }
-                                //}
-                                //else if (line[2] == "<") {
-                                //    if (line[1] < line[3]) {
-                                //
-                                //    } else {
-                                //        i++;
-                                //    }
-                                //}
-                                //else if (line[2] == ">") {
-                                //    if (line[1] > line[3]) {
-                                //
-                                //    } else {
-                                //        i++;
-                                //    }
-                                //}
-                                //else if (line[2] == "!=") {
-                                //    if (line[1] != line[3]) {
-                                //
-                                //    } else {
-                                //        i++;
-                                //    }
-                                //}
-                                //else if (line[2] == "<=") {
-                                //    if (line[1] <= line[3]) {
-                                //
-                                //    } else {
-                                //        i++;
-                                //    }
-                                //}
-                                //else if (line[2] == ">=") {
-                                //    if (line[1] >= line[3]) {
-                                //
-                                //    } else {
-                                //        i++;
-                                //    }
-                                //}
-                                //else if (line[2] == "<>") {
-                                //    if (line[1] != line[3]) {
-                                //
-                                //    } else {
-                                //        i++;
-                                //    }
-                                //}
-                                //else {
-                                //    addLine("INVALID CONDITIONAL SYNTAX AT LINE " + (i + 1) + ".");
-                                //    i = currentScript.length;
-                                //}
-
-                                // Append all the remaining things together
-                                var ifExpression = "";
-                                for (var j = 1; j < line.length; j++) {
-                                    ifExpression += line[j];
-                                }
-
-                                var ifResult = evaluateExpression(ifExpression);
-
-                                if (ifResult == true) {
-                                    // Nothing happens because I'm going to run my next line
-                                } else {
-                                    // i is incremented to get to the ELSE line
-                                    i++;
-                                }
-                            }
-                            //else if (line[0] == "ELSE") {
-                            //    // same as before...
-                            //}
-                            //else if (line[0] == "ENDIF") {
-                            //    // what do I do to end an IF?
-                            //}
-                            else if (line[0] == "VAR") {
-                                // Make sure variable name doesn't already exist
-                                //  - If it doesn't, pop it to the token list
-                                //  - If it does, add error and end script
-
-                                var varName = line[1].substring(1, line[1].length);
-                                var exists = false;
-                                for (var j = 0; j < tokenList.length; j++) {
-                                    if (tokenList[j].key == varName) { exists = true; }
-                                }
-
-                                //addLine("VARIABLE EXISTS: " + exists);
-
-                                if (!exists) {
-                                    tokenList.push({
-                                        key: varName,
-                                        value: ""
-                                    });
-                                    //addLine("VARIABLE $" + varName + " DOES NOT EXIST. NEW VARIABLE CREATED.");
-                                    //addLine("TokenList: ");
-                                    //for (j = 0; j < tokenList.length; j++) {
-                                    //    addLine(tokenList[j].key + ", " + tokenList[j].value);
-                                    //}
-                                } else {
-                                    //addLine("VARIABLE NAME '$" + varName + "' ON LINE " + (i + 1) + " ALREADY EXISTS.");
-                                    i = currentScript.length;
-                                }
-                            }
-                            else if (line[0] == "LET") {
-                                // Make sure variable name exists
-                                // If it does, check type of 3rd parameter
-                                // - If it's a string or number set the token list item value to it
-                                // - If it's a variable, 
-                                // TODO: Let this work with expressions
-                                // - Should expressions evaluate off a stack? This way it can do math with parentheses.
-
-                                if (line[2] == '=') {
-                                    var varName0Exists = false;
-                                    var varName0 = line[1].substring(1, line[1].length);
-                                    var varName0Index;
-                                    //var varName1Exists = false;
-                                    //var varName1IsVariable = false;
-                                    //var var1 = line[3];
-                                    //var varName1 = line[3].substring(1, line[3].length);
-                                    //var varName1Index;
-
-                                    //if (varName1[0] == '$') { varName1IsVariable = true; }
-
-                                    // Make sure variable name exists
-                                    for (var j = 0; j < tokenList.length; j++) {
-                                        if (tokenList[j].key == varName0) {
-                                            varName0Exists = true;
-                                            varName0Index = j;
-                                            //addLine("tokenList[" + j + "] = { " + tokenList[j].key + ", " + tokenList[j].value + "};");
-                                        }
-                                        //else if ((varName1IsVariable == true) && (tokenList[j].key = varName1)) {
-                                        //    varName1Exists = true;
-                                        //    varName1Index = j;
-                                        //    //addLine("tokenList[" + j + "] = { " + tokenList[j].key + ", " + tokenList[j].value + "};");
-                                        //}
-                                    }
-
-                                    if (varName0Exists) {
-                                        //if (line.length == 6) {
-                                        //    //addLine("LINE.LENGTH==6");
-                                        //    tokenList[varName0Index].value = evaluateExpression(line[3], line[4], line[5], tokenList);
-                                        //}
-                                        //else if (!varName1IsVariable) {
-                                        //    //addLine("!VARNAME1ISVARIABLE");
-                                        //    tokenList[varName0Index].value = var1;
-                                        //}
-                                        //else if (varNamevarName1Exists) {
-                                        //    //addLine("VARNAME1EXISTS");
-                                        //    tokenList[varName0Index].value = tokenList[varName1Index].value;
-                                        //}
-                                        //else {
-                                        //    addLine("VARIABLE2 NAME '$" + varName1 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
-                                        //    i = currentScript.length;
-                                        //}
-
-                                        var tempExp = "";
-                                        for (var j = 3; j < line.length; j++) {
-                                            tempExp += line[j];
-                                        }
-                                        //addLine("Processing LET with " + tempExp);
-                                        tokenList[varName0Index].value = evaluateExpression(tempExp, tokenList);
-                                    }
-                                    else {
-                                        addLine("VARIABLE1 NAME '$" + varName0 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
-                                        //for (var k = 0; k < line.length; k++) {
-                                        //    addLine("WORD" + k + " = " + line[k]);
-                                        //}
-                                        i = currentScript.length;
-                                    }
-
-                                    //if (varName0Exists && varName1Exists) {
-                                    //    if (varName1IsVariable) {
-                                    //        tokenList[varName0Index].value = var1;
-                                    //        //addLine("tokenList[" + varName0Index + "] = { " + tokenList[varName0Index].key + ", " + tokenList[varName0Index].value + "};");
-                                    //    } else {
-                                    //        tokenList[varName0Index].value = tokenList[varName1Index].value;
-                                    //        //addLine("tokenList[" + varName0Index + "] = { " + tokenList[varName0Index].key + ", " + tokenList[varName0Index].value + "};");
-                                    //    }
-                                    //}
-                                    //else {
-                                    //    if (!varName0Exists) {
-                                    //        addLine("VARIABLE1 NAME '$" + varName0 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
-                                    //        //for (var k = 0; k < line.length; k++) {
-                                    //        //    addLine("WORD" + k + " = " + line[k]);
-                                    //        //}
-                                    //        i = currentScript.length;
-                                    //    }
-                                    //    else if (!varName1IsVariable) {
-                                    //        tokenList[varName0Index].value = var1;
-                                    //        //addLine("tokenList[" + varName0Index + "] = { " + tokenList[varName0Index].key + ", " + tokenList[varName0Index].value + "};");
-                                    //    }
-                                    //    if (!varName1Exists && varName1IsVariable) {
-                                    //        addLine("VARIABLE2 NAME '$" + varName1 + "' ON LINE " + (i + 1) + " DOES NOT EXIST.");
-                                    //        i = currentScript.length;
-                                    //    }
-                                    //}
-                                } else {
-                                    addLine("INVALID OPERATOR ON LINE " + (i + 1) + ".");
-                                    i = currentScript.length;
-                                }
-                            }
-                            else {
-                                addLine("AN ERROR OCCURRED ON LINE " + (i + 1) + " OF " + params[1] + ".");
-                                i = currentScript.length;
-                            }
-                        }
-                    }
-                    else {
-                        addLine("SYNTAX ERROR.");
-                    }
-
-                    tokenList = [];
-                }
-
-                programLoaded = false;
-
-                //how do I allow user input inside programs?
+                wkrProgram.postMessage({ program: 'BATCH' });
             };
 
             var registerCommand = function (text) {
@@ -1354,7 +991,7 @@
                     //    // left is 37, up is 38, right is 39, and down is 40
                     //}
                     else if (charCode == 27) {
-                        //fgColor = "#FF0000";
+                        fgColor = "#FF0000";
                         interrupt = charCode;
                     }
                     else {
@@ -1364,7 +1001,7 @@
                 }
                 else {
                     if (charCode == 27) {
-                        //fgColor = "#FF0000";
+                        fgColor = "#FF0000";
                     }
                     interrupt = charCode;
                 }
