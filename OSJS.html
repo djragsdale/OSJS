@@ -75,8 +75,8 @@
             var fontSize = 16;
             var bgColor = "#303030";
             var fgColor = "#FFFFFF";
-            var cursorRow = null;
-            var cursorColumn = null;
+            var cursorRow = -1;
+            var cursorColumn = -1;
             var font = "Courier New";
             var lines = [];
             var currentPath = "/";
@@ -1330,7 +1330,9 @@
             // Capture keypress
             // from http://stackoverflow.com/questions/3729034/javascript-html5-capture-keycode-and-write-to-canvas
             // Had to switch .onkeypress event to .onkeydown so as to capture backspace.
+            //var keypressHandled = false;
             terminal.onkeypress = function (evt) {
+                //keyPressHandled = true;
                 var charCode = evt.which;
                 if (!programControl) {
                     if (charCode == 13) {
@@ -1378,8 +1380,14 @@
                     if (charCode == 27) {
                         //fgColor = "#FF0000";
                     }
-                    interrupt = charCode;
-                    evt.preventDefault();
+                    if (charCode == 8 || charCode == 32) {
+                        interrupt = charCode;
+                        evt.preventDefault();
+                    }
+                    else {
+                        interrupt = charCode;
+                        evt.preventDefault();
+                    }
                 }
             };
 
