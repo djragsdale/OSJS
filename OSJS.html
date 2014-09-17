@@ -75,6 +75,8 @@
             var fontSize = 16;
             var bgColor = "#303030";
             var fgColor = "#FFFFFF";
+            var cursorRow = null;
+            var cursorColumn = null;
             var font = "Courier New";
             var lines = [];
             var currentPath = "/";
@@ -130,21 +132,30 @@
                     tContext.stroke();
 
                     if (frame > 49) {
-                        writeLine(currentPath + "> " + currentLine + "_", width * (0.02), height * (0.97));
+                        writeLine(currentPath + "> " + currentLine + "_", width * (0.02), height * (0.97), bgColor, fgColor);
                     }
-                    else { writeLine(currentPath + "> " + currentLine, width * (0.02), height * (0.97)); }
+                    else { writeLine(currentPath + "> " + currentLine, width * (0.02), height * (0.97), bgColor, fgColor); }
                 }
 
                 for (var i = 0; i < lines.length; i++) {
-                    writeLine(lines[i], width * (0.02), height * (0.07) + (i * (fontSize * 1.08)));
+                    for (var j = 0; j < lines[i].length; j++) {
+                        if (i == cursorRow && j == cursorColumn) {
+                            writeLine(lines[i][j], width * (0.02) + j * (fontSize * 0.6), height * (0.07) + (i * (fontSize * 1.08)), fgColor, bgColor);
+                        }
+                        else {
+                            writeLine(lines[i][j], width * (0.02) + j * (fontSize * 0.6), height * (0.07) + (i * (fontSize * 1.08)), bgColor, fgColor);
+                        }
+                    }
                 }
             };
 
-            var writeLine = function (text, x, y) {
-                // TODO: Handle a cursor...
-
+            var writeLine = function (text, x, y, backColor, foreColor) {
+                // Handle the cursor possibility first
+                if (backColor != bgColor) {
+                    tContext.fillRect(x, y - (fontSize * 0.8), (fontSize * 0.6), (fontSize * 1.1));
+                }
                 tContext.font = fontSize + "px " + font;
-                tContext.fillStyle = fgColor;
+                tContext.fillStyle = foreColor;
                 tContext.fillText(text, x, y);
             };
 
@@ -1336,6 +1347,7 @@
                 }
                 else {
                     interrupt = charCode;
+                    evt.preventDefault();
                 }
             };
 
@@ -1367,6 +1379,7 @@
                         //fgColor = "#FF0000";
                     }
                     interrupt = charCode;
+                    evt.preventDefault();
                 }
             };
 
