@@ -1379,14 +1379,24 @@
                 else {
                     if (charCode == 27) {
                         //fgColor = "#FF0000";
+                        interrupt = charCode;
+                        evt.preventDefault();
                     }
-                    if (charCode == 8 || charCode == 32) {
+                    else if (charCode == 8 || charCode == 32) {
+                        interrupt = charCode;
+                        evt.preventDefault();
+                    }
+                    else if (charCode == 46) {
+                        interrupt = 15;
+                        evt.preventDefault();
+                    }
+                    else if (charCode == 37 || charCode == 38 || charCode == 39 || charCode == 40) {
                         interrupt = charCode;
                         evt.preventDefault();
                     }
                     else {
-                        interrupt = charCode;
-                        evt.preventDefault();
+                        //interrupt = charCode;
+                        //evt.preventDefault();
                     }
                 }
             };

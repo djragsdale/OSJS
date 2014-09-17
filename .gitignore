@@ -13,3 +13,16 @@ pathExists.php
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Web files #
+.htaccess
+400.shtml
+401.shtml
+403.shtml
+404.shtml
+500.shtml
+500.php
+default.html
+Ensure.js
+error_log
+jquery-*
