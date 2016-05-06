@@ -34,7 +34,7 @@
         </div>
 
         <script id="runProgram"></script>
-        
+
 
         <script>
             /*
@@ -50,7 +50,7 @@
             * [+]  - Maybe have the "programs" written in actual JS, and when installing them you give the path to the JS file and it's saved in the DB.
             * [ ]  - Maybe write a real compiler for something simple like COBOL or BASIC that boils the programs down to JS?
             * [-]  - Evaluates complex expressions to true/false, a number, or concatenated string
-            * 
+            *
             * Ideas:
             *  - Have a computer object which handles physical output.
             *  - Have a keyboard class which contacts the computer (like the controller of the architecture). Inherits from IO which inherits from Device and logs interrupts with the OS.
@@ -88,6 +88,7 @@
             var interrupt = null;
             var programControl = false;
             var DEBUG = true;
+            var BASE_URL = "http://osjs.otiummusic.com/";
 
             var loadDefaultPrograms = function () {
                 // Should probably run sql boot scripts loading the listed programs
@@ -636,12 +637,12 @@
                 }
                 else if (programTitle == "HELP") {
                     addLine('Querying filesystem for program...');
-                    $.getScript('/getProgram.php?q=HELP', function () {
+                    $.getScript(BASE_URL + 'getProgram.php?q=HELP', function () {
                         addLine('...HELP program loaded.');
                         programLoaded = true;
                     });
                     //var scriptHolder = document.getElementById('scrProgram');
-                    //scriptHolder.innerHTML = 
+                    //scriptHolder.innerHTML =
                     //addLine('LIST OF RECOGNIZED COMMANDS:');
                     //addLine('- HELP [command]');
                     //addLine('- CLEAR');
@@ -758,7 +759,7 @@
                         }
                     }
                 };
-                xmlhttp.open("GET", "getScript.php?q=" + query, true);
+                xmlhttp.open("GET", BASE_URL + "getScript.php?q=" + query, true);
                 xmlhttp.send();
             };
 
@@ -780,7 +781,7 @@
                         xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
                     }
 
-                    xmlhttp.open("GET", "getScript.php?q=" + fileName.substring(0, fileName.length - 4), false);
+                    xmlhttp.open("GET", BASE_URL + "getScript.php?q=" + fileName.substring(0, fileName.length - 4), false);
                     xmlhttp.send();
 
                     var results = JSON.parse(xmlhttp.responseText);
@@ -890,7 +891,8 @@
                 //    var params = [];
                 //    main(params);
                 //});
-                ensure({ js: "getProgram.php?q=" + params[0] + "&n=" + Math.random() }, function () {
+                // Append query string so the request appears unique, otherwise ensure will just use the one already loaded.
+                ensure({ js: BASE_URL + "getProgram.php?q=" + params[0] + "&n=" + Math.random() }, function () {
                     //if (errored) {
                     //    addLine("..." + params[0] + " program does not exist.");
                     //}
@@ -1011,7 +1013,7 @@
                             * Define my script language which BATCH can run (-word- indicates low priority):
                             * start with BEGIN "program-name"
                             * -PAUSE-
-                            * INPUT captures user input w/ 2 parameters: variable name, prompt for user  
+                            * INPUT captures user input w/ 2 parameters: variable name, prompt for user
                             * ECHO captures only the first following parameter, but includes everything in ""'s
                             * REM indicates comments
                             * IF has 3 parameters: item0, operator, item1
@@ -1201,7 +1203,7 @@
                                 // Make sure variable name exists
                                 // If it does, check type of 3rd parameter
                                 // - If it's a string or number set the token list item value to it
-                                // - If it's a variable, 
+                                // - If it's a variable,
                                 // TODO: Let this work with expressions
                                 // - Should expressions evaluate off a stack? This way it can do math with parentheses.
 
@@ -1440,5 +1442,6 @@
             <input type="text" id="txtResponse" style="width: 800px;"></input>
             -->
         </div>
+        <!-- OSJS: Version 0.1 -->
     </body>
 </html>
